@@ -1,8 +1,8 @@
-# To Do: Button labels not centered
+# To Do: Button labels not displayed
 
 import sys
 sys.path.append("../pygame-cdkk")
-from PyGameApp import *
+from cdkkPyGameApp import *
 from BoardGames import *
 
 MNK_COLS = 7   # m

@@ -1,4 +1,4 @@
-from PyGameUtils import *
+from cdkkUtils import *
 
 class Board:
     def __init__(self, xsize, ysize):

@@ -3,7 +3,7 @@
 
 import sys
 sys.path.append("../pygame-cdkk")
-from PyGameApp import *
+from cdkkPyGameApp import *
 from BoardGames import *
 
 ### --------------------------------------------------
