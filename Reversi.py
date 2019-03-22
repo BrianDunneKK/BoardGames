@@ -1,29 +1,14 @@
-# To Do: Drawing Game over text not working
-# To Do: Button labels not centered
+# To Do: "Draw" no displayed
 
 import sys
 sys.path.append("../pygame-cdkk")
 from cdkkPyGameApp import *
+from cdkkSpriteExtra import *
 from BoardGames import *
 
 ### --------------------------------------------------
 
-class Sprite_Reversi_Button(Sprite_TextBox):
-    def __init__(self, name, event_on_click, centerx, centery, event_on_unclick=None):
-        super().__init__(name)
-        self.text = name
-        self.setup_textbox(120, 35, "black", 36, ["gray80", "black"])
-        self.setup_mouse_events(event_on_click, event_on_unclick)
-        self.rect.center = (centerx, centery)
-
-class Sprite_Reversi_Label(Sprite_TextBox):
-    def __init__(self, name, centerx, centery):
-        super().__init__(name)
-        self.setup_textbox(200, 35, "black", 36)
-        self.text_format = name + ": {0}"
-        self.rect.center = (centerx, centery)
-
-class Sprite_Reversi_Winner(Sprite_TextBox):
+class Sprite_Reversi_Winner(Sprite_DynamicText):
     def __init__(self, centerx, centery):
         super().__init__("Winner")
         self.text_format = "Winner: {0}"
@@ -35,29 +20,36 @@ class Sprite_Reversi_Winner(Sprite_TextBox):
 class Manager_Reversi(SpriteManager):
     def __init__(self, limits, name = "Board Manager"):
         super().__init__(name)
-        board = Sprite_BoardGame_Board("Board")
+        board = Sprite_BoardGame_Board(name="Board", style={"fillcolour":"green", "altcolour":None, "outlinecolour":"black", "outlinewidth":2})
         cell_size = int(min((limits.height * 0.8) / 8, (limits.width * 0.8) / 8))
-        colour_scheme = ["green", "black", None, "palegreen3"]
-        board.setup_grid(colour_scheme, cell_size, 8, EventManager.gc_event("Board"))
+        board.setup_grid(cell_size, 8, EventManager.gc_event("Board"))
         board.rect.center = limits.center
         self.add(board)
-        
+
         self._reversi = Board_Reversi(8,8)
         self._reversi.setup()
-        self._piece_shape = Sprite_BoardGame_Piece.PIECE_CIRLCE
-        self._piece_colours = ["black", None, "white"]
         self.startup()
 
-        self.add(Sprite_Reversi_Label("Black", limits.width * 0.2, limits.height * 0.05))
-        self.sprite("Black").set_text(self._reversi.count_player_pieces(1))
+        label_style = {"fillcolour":None, "shapewidth":200, "shapeheight":35}
+        self._black_score = Sprite_DynamicText("Black", style=label_style)
+        self._black_score.rect.center = (limits.width * 0.2, limits.height * 0.05)
+        self._black_score.set_text_format("Black: {0}", self._reversi.count_player_pieces(1))
+        self.add(self._black_score)
 
-        self.add(Sprite_Reversi_Label("Next", limits.width * 0.5, limits.height * 0.05))
-        self.sprite("Next").set_text(self._reversi.current_player_name)
+        self._next_player = Sprite_DynamicText("Next", style=label_style)
+        self._next_player.rect.center = (limits.width * 0.5, limits.height * 0.05)
+        self._next_player.set_text_format("Next: {0}", self._reversi.current_player_name)
+        self.add(self._next_player)
 
-        self.add(Sprite_Reversi_Label("White", limits.width * 0.8, limits.height * 0.05))
-        self.sprite("White").set_text(self._reversi.count_player_pieces(2))
+        self._white_score = Sprite_DynamicText("White", style=label_style)
+        self._white_score.rect.center = (limits.width * 0.8, limits.height * 0.05)
+        self._white_score.set_text_format("White: {0}", self._reversi.count_player_pieces(2))
+        self.add(self._white_score)
 
-        self._game_over = Sprite_Reversi_Winner(limits.width * 0.5, limits.height * 0.5)
+        winner_style = { "textcolour":"red3", "textsize":64, "fillcolour":"yellow1", "outlinecolour":"red3", "shapewidth":400, "shapeheight":80}
+        self._winner = Sprite_DynamicText("Winner", style=winner_style)
+        self._winner.rect.center = (limits.width * 0.5, limits.height * 0.5)
+        self._winner.set_text_format("Winner: {0}", "")
 
         ev_Pass = EventManager.gc_event("Pass")
         ev_Hint = EventManager.gc_event("Hint")
@@ -65,11 +57,17 @@ class Manager_Reversi(SpriteManager):
         ev_Restart = EventManager.gc_event("StartGame")
         ev_Quit = EventManager.gc_event("Quit")
 
-        self.add(Sprite_Reversi_Button("Pass", ev_Pass, limits.width * 0.2, limits.height * 0.95))
-        self.add(Sprite_Reversi_Button("Hint", ev_Hint, limits.width * 0.4, limits.height * 0.95, ev_ClearHint))
-        self.add(Sprite_Reversi_Button("Restart", ev_Restart, limits.width * 0.6, limits.height * 0.95))
-        self.add(Sprite_Reversi_Button("Quit", ev_Quit, limits.width * 0.8, limits.height * 0.95))
-        
+        button_style = {"shapewidth":120, "shapeheight":35}
+        self.add(Sprite_Button("Pass", event_on_click=ev_Pass, style=button_style))
+        self.add(Sprite_Button("Hint", event_on_click=ev_Hint, event_on_unclick=ev_ClearHint, style=button_style))
+        self.add(Sprite_Button("Restart", event_on_click=ev_Restart, style=button_style))
+        self.add(Sprite_Button("Quit", event_on_click=ev_Quit, style=button_style))
+
+        self.sprite("Pass").rect.center    = (limits.width * 0.2, limits.height * 0.95)
+        self.sprite("Hint").rect.center    = (limits.width * 0.4, limits.height * 0.95)
+        self.sprite("Restart").rect.center = (limits.width * 0.6, limits.height * 0.95)
+        self.sprite("Quit").rect.center    = (limits.width * 0.8, limits.height * 0.95)
+
     def startup(self):
         self.remove_by_class("Sprite_BoardGame_Piece")
         self._reversi.setup()
@@ -88,7 +86,7 @@ class Manager_Reversi(SpriteManager):
                 self._reversi.next_player()
             elif e.action == "StartGame":
                 self.startup()
-                self.remove(self._game_over) # Hide Game Over
+                self.remove(self._winner) # Hide Game Over
             elif e.action == "Hint":
                 moves = self._reversi.next_moves()
                 self.sprite("Board").highlight_cells(moves)
@@ -114,13 +112,14 @@ class Manager_Reversi(SpriteManager):
                     self.sprite(name).flip()
             
         if go is not None:
-            self._game_over.set_text(self._reversi.player_name(go))
-            self.add(self._game_over)
+            self._winner.set_text(self._reversi.player_name(go))
+            self.add(self._winner)
 
     def add_piece(self, col, row, player):
         name = "{0:02d}-{1:02d}".format(col, row)
         piece = Sprite_BoardGame_Piece(name, self.sprite("Board"), col, row)
-        piece.setup_piece(self._piece_shape, self._piece_colours, (player == '1'))
+        if player == "1":
+            piece.flip()
         self.add(piece)
 
     def update(self):
