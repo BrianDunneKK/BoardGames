@@ -1,4 +1,4 @@
-# To Do: "Draw" no displayed
+# To Do: "Draw" not displayed
 
 import sys
 sys.path.append("../pygame-cdkk")
@@ -30,7 +30,7 @@ class Manager_Reversi(SpriteManager):
         self._reversi.setup()
         self.startup()
 
-        label_style = {"fillcolour":None, "shapewidth":200, "shapeheight":35}
+        label_style = {"fillcolour":None, "width":200, "height":35}
         self._black_score = Sprite_DynamicText("Black", style=label_style)
         self._black_score.rect.center = (limits.width * 0.2, limits.height * 0.05)
         self._black_score.set_text_format("Black: {0}", self._reversi.count_player_pieces(1))
@@ -46,7 +46,7 @@ class Manager_Reversi(SpriteManager):
         self._white_score.set_text_format("White: {0}", self._reversi.count_player_pieces(2))
         self.add(self._white_score)
 
-        winner_style = { "textcolour":"red3", "textsize":64, "fillcolour":"yellow1", "outlinecolour":"red3", "shapewidth":400, "shapeheight":80}
+        winner_style = { "textcolour":"red3", "textsize":64, "fillcolour":"yellow1", "outlinecolour":"red3", "width":400, "height":80}
         self._winner = Sprite_DynamicText("Winner", style=winner_style)
         self._winner.rect.center = (limits.width * 0.5, limits.height * 0.5)
         self._winner.set_text_format("Winner: {0}", "")
@@ -57,7 +57,7 @@ class Manager_Reversi(SpriteManager):
         ev_Restart = EventManager.gc_event("StartGame")
         ev_Quit = EventManager.gc_event("Quit")
 
-        button_style = {"shapewidth":120, "shapeheight":35}
+        button_style = {"width":120, "height":35}
         self.add(Sprite_Button("Pass", event_on_click=ev_Pass, style=button_style))
         self.add(Sprite_Button("Hint", event_on_click=ev_Hint, event_on_unclick=ev_ClearHint, style=button_style))
         self.add(Sprite_Button("Restart", event_on_click=ev_Restart, style=button_style))

@@ -47,7 +47,7 @@ class Manager_mnkGame(SpriteManager):
         self._next_player.set_text_format("Next: {0}", "")
         self.add(self._next_player)
 
-        winner_style = { "textcolour":"red3", "textsize":48, "fillcolour":"yellow1", "outlinecolour":"red3", "shapewidth":400, "shapeheight":80}
+        winner_style = { "textcolour":"red3", "textsize":48, "fillcolour":"yellow1", "outlinecolour":"red3", "width":400, "height":80}
         self._winner = Sprite_DynamicText("Winner", rect=cdkkRect(limits.width/2-200, 25, 400, 70), style=winner_style)
         self._winner.set_text_format("Winner: {0}", "")
 
@@ -113,13 +113,11 @@ class Manager_mnkGame(SpriteManager):
         if self._next_piece is not None:
             self.remove(self._next_piece)
         player = self._mnk_game.current_player_code
-        print("Prep next piece piece: {0}".format(player))
         self._next_piece = Sprite_mnkGame_Piece("Next Piece", 3, -1, player)
         self.add(self._next_piece)
 
     def add_piece(self, col, row, player):
         name = "{0:02d}-{1:02d}".format(col, row)
-        print("Add piece: {0}".format(player))
         piece = Sprite_mnkGame_Piece(name, col, -1, player)
         destination = self.sprite("Board").cell_rect(col, row)
         piece.rect.add_limit(Physics_Limit(destination, LIMIT_OVERLAP, AT_LIMIT_Y_CLEAR_VEL_Y))
