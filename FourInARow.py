@@ -134,9 +134,7 @@ class Manager_mnkGame(SpriteManager):
 
 class BoardGameApp(PyGameApp):
     def init(self):
-        super().init(fullscreen=True)
-        pygame.display.set_caption("Board Game")
-        self.background_fill = "burlywood"
+        super().init()
         self.add_sprite_mgr(Manager_mnkGame(self.boundary))
         self.event_mgr.keyboard_event(pygame.K_q, "Quit")
         self.event_mgr.keyboard_event(pygame.K_p, "Print")
@@ -144,5 +142,10 @@ class BoardGameApp(PyGameApp):
 
 ### --------------------------------------------------
 
-theApp = BoardGameApp()
+app_config = {
+    "full_screen":True,
+    "background_fill":"burlywood",
+    "caption":"Board Game"
+    }
+theApp = BoardGameApp(app_config)
 theApp.execute()

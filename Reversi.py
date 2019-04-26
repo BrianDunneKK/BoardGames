@@ -1,4 +1,4 @@
-# To Do: "Draw" not displayed
+# To Do: "Draw" (no winner) not displayed
 
 import sys
 sys.path.append("../pygame-cdkk")
@@ -144,5 +144,11 @@ class BoardGameApp(PyGameApp):
 
 ### --------------------------------------------------
 
-theApp = BoardGameApp()
+app_config = {
+    "width":1500, "height":1000,
+    "background_fill":"burlywood",
+    "caption":"Reversi",
+    "auto_start":True
+    }
+theApp = BoardGameApp(app_config)
 theApp.execute()
