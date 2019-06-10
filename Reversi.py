@@ -80,7 +80,7 @@ class Manager_Reversi(SpriteManager):
             dealt_with = True
             if e.action == "Board":
                 x, y = e.pos
-                col, row = self.sprite("Board").find_cell(x, y)
+                col, row = self.sprite("Board").find_cell((x, y))
                 self.play_piece(col, row)
             elif e.action == "Pass":
                 self._reversi.next_player()

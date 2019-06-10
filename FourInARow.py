@@ -82,14 +82,14 @@ class Manager_mnkGame(SpriteManager):
             dealt_with = True
             if e.action == "MouseMotion" and self.game_is_active:
                 x, y = e.info['pos']
-                col, row = self.sprite("Board").find_cell(x, y, True)
+                col, row = self.sprite("Board").find_cell((x, y), True)
                 col = max (0, col)
                 col = min (MNK_COLS-1, col)
                 self._next_piece.set_pos(col, -1)
                 dealt_with = True
             elif e.action == "Board" and self.game_is_active:
                 x, y = e.pos
-                col, row = self.sprite("Board").find_cell(x, y)
+                col, row = self.sprite("Board").find_cell((x, y))
                 if self.play_piece(col) is None:
                     self.prep_next_piece()
             elif e.action == "Print":
