@@ -33,7 +33,7 @@ class Manager_mnkGame(SpriteManager):
         board = Sprite_BoardGame_Board("Board", {"fillcolour":None, "altcolour":None, "fillimage":"Images/board.png", "outlinecolour":None})
         # board = Sprite_BoardGame_Board("Board")
         cell_size = int(min((limits.height * 0.75) / MNK_ROWS, (limits.width * 0.75) / MNK_COLS))
-        board.setup_grid(cell_size, MNK_COLS, EventManager.gc_event("Board"), MNK_ROWS, None)
+        board.setup_board_grid(cell_size, MNK_COLS, EventManager.gc_event("Board"), MNK_ROWS, None)
         board.rect.center = limits.center
         self.add(board, layer=9)
         Sprite_mnkGame_Piece.mnkGame_board = board

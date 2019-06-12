@@ -22,7 +22,7 @@ class Manager_Reversi(SpriteManager):
         super().__init__(name)
         board = Sprite_BoardGame_Board(name="Board", style={"fillcolour":"green", "altcolour":None, "outlinecolour":"black", "outlinewidth":2})
         cell_size = int(min((limits.height * 0.8) / 8, (limits.width * 0.8) / 8))
-        board.setup_grid(cell_size, 8, EventManager.gc_event("Board"))
+        board.setup_board_grid(cell_size, 8, EventManager.gc_event("Board"))
         board.rect.center = limits.center
         self.add(board)
 
