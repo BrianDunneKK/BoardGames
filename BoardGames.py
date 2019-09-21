@@ -1,4 +1,4 @@
-from cdkkUtils import *
+import cdkk
 
 class Board:
     def __init__(self, xsize, ysize):

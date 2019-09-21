@@ -1,14 +1,13 @@
 # To Do: "Draw" (no winner) not displayed
+# To Do: Next player is "Draw"
 
-import sys
-sys.path.append("../pygame-cdkk")
-from cdkkPyGameApp import *
-from cdkkSpriteExtra import *
+import cdkk
+import pygame
 from BoardGames import *
 
 ### --------------------------------------------------
 
-class Sprite_Reversi_Winner(Sprite_DynamicText):
+class Sprite_Reversi_Winner(cdkk.Sprite_DynamicText):
     def __init__(self, centerx, centery):
         super().__init__("Winner")
         self.text_format = "Winner: {0}"
@@ -17,12 +16,12 @@ class Sprite_Reversi_Winner(Sprite_DynamicText):
 
 ### --------------------------------------------------
 
-class Manager_Reversi(SpriteManager):
+class Manager_Reversi(cdkk.SpriteManager):
     def __init__(self, limits, name = "Board Manager"):
         super().__init__(name)
-        board = Sprite_BoardGame_Board(name="Board", style={"fillcolour":"green", "altcolour":None, "outlinecolour":"black", "outlinewidth":2})
+        board = cdkk.Sprite_BoardGame_Board(name="Board", style={"fillcolour":"green", "altcolour":None, "outlinecolour":"black", "outlinewidth":2})
         cell_size = int(min((limits.height * 0.8) / 8, (limits.width * 0.8) / 8))
-        board.setup_board_grid(cell_size, 8, EventManager.gc_event("Board"))
+        board.setup_board_grid(cell_size, 8, cdkk.EventManager.gc_event("Board"))
         board.rect.center = limits.center
         self.add(board)
 
@@ -31,37 +30,37 @@ class Manager_Reversi(SpriteManager):
         self.startup()
 
         label_style = {"fillcolour":None, "width":200, "height":35}
-        self._black_score = Sprite_DynamicText("Black", style=label_style)
+        self._black_score = cdkk.Sprite_DynamicText("Black", style=label_style)
         self._black_score.rect.center = (limits.width * 0.2, limits.height * 0.05)
         self._black_score.set_text_format("Black: {0}", self._reversi.count_player_pieces(1))
         self.add(self._black_score)
 
-        self._next_player = Sprite_DynamicText("Next", style=label_style)
+        self._next_player = cdkk.Sprite_DynamicText("Next", style=label_style)
         self._next_player.rect.center = (limits.width * 0.5, limits.height * 0.05)
         self._next_player.set_text_format("Next: {0}", self._reversi.current_player_name)
         self.add(self._next_player)
 
-        self._white_score = Sprite_DynamicText("White", style=label_style)
+        self._white_score = cdkk.Sprite_DynamicText("White", style=label_style)
         self._white_score.rect.center = (limits.width * 0.8, limits.height * 0.05)
         self._white_score.set_text_format("White: {0}", self._reversi.count_player_pieces(2))
         self.add(self._white_score)
 
         winner_style = { "textcolour":"red3", "textsize":64, "fillcolour":"yellow1", "outlinecolour":"red3", "width":400, "height":80}
-        self._winner = Sprite_DynamicText("Winner", style=winner_style)
+        self._winner = cdkk.Sprite_DynamicText("Winner", style=winner_style)
         self._winner.rect.center = (limits.width * 0.5, limits.height * 0.5)
         self._winner.set_text_format("Winner: {0}", "")
 
-        ev_Pass = EventManager.gc_event("Pass")
-        ev_Hint = EventManager.gc_event("Hint")
-        ev_ClearHint = EventManager.create_event(EVENT_GAME_TIMER_1)
-        ev_Restart = EventManager.gc_event("StartGame")
-        ev_Quit = EventManager.gc_event("Quit")
+        ev_Pass = cdkk.EventManager.gc_event("Pass")
+        ev_Hint = cdkk.EventManager.gc_event("Hint")
+        ev_ClearHint = cdkk.EventManager.create_event(cdkk.EVENT_GAME_TIMER_1)
+        ev_Restart = cdkk.EventManager.gc_event("StartGame")
+        ev_Quit = cdkk.EventManager.gc_event("Quit")
 
         button_style = {"width":120, "height":35}
-        self.add(Sprite_Button("Pass", event_on_click=ev_Pass, style=button_style))
-        self.add(Sprite_Button("Hint", event_on_click=ev_Hint, event_on_unclick=ev_ClearHint, style=button_style))
-        self.add(Sprite_Button("Restart", event_on_click=ev_Restart, style=button_style))
-        self.add(Sprite_Button("Quit", event_on_click=ev_Quit, style=button_style))
+        self.add(cdkk.Sprite_Button("Pass", event_on_click=ev_Pass, style=button_style))
+        self.add(cdkk.Sprite_Button("Hint", event_on_click=ev_Hint, event_on_unclick=ev_ClearHint, style=button_style))
+        self.add(cdkk.Sprite_Button("Restart", event_on_click=ev_Restart, style=button_style))
+        self.add(cdkk.Sprite_Button("Quit", event_on_click=ev_Quit, style=button_style))
 
         self.sprite("Pass").rect.center    = (limits.width * 0.2, limits.height * 0.95)
         self.sprite("Hint").rect.center    = (limits.width * 0.4, limits.height * 0.95)
@@ -76,7 +75,7 @@ class Manager_Reversi(SpriteManager):
 
     def event(self, e):
         dealt_with = super().event(e)
-        if not dealt_with and e.type == EVENT_GAME_CONTROL:
+        if not dealt_with and e.type == cdkk.EVENT_GAME_CONTROL:
             dealt_with = True
             if e.action == "Board":
                 x, y = e.pos
@@ -90,7 +89,7 @@ class Manager_Reversi(SpriteManager):
             elif e.action == "Hint":
                 moves = self._reversi.next_moves()
                 self.sprite("Board").highlight_cells(moves)
-                self.timer = Timer(1, EVENT_GAME_TIMER_1)
+                self.timer = cdkk.Timer(1, cdkk.EVENT_GAME_TIMER_1)
             elif e.action == "ClearHint":
                 self.timer.stop_event()
                 moves = self._reversi.next_moves()
@@ -117,7 +116,7 @@ class Manager_Reversi(SpriteManager):
 
     def add_piece(self, col, row, player):
         name = "{0:02d}-{1:02d}".format(col, row)
-        piece = Sprite_BoardGame_Piece(name, self.sprite("Board"), col, row)
+        piece = cdkk.Sprite_BoardGame_Piece(name, self.sprite("Board"), col, row)
         if player == "1":
             piece.flip()
         self.add(piece)
@@ -130,7 +129,7 @@ class Manager_Reversi(SpriteManager):
 
 ### --------------------------------------------------
 
-class BoardGameApp(PyGameApp):
+class BoardGameApp(cdkk.PyGameApp):
 
     def init(self):
         super().init()
@@ -140,7 +139,7 @@ class BoardGameApp(PyGameApp):
         self.event_mgr.keyboard_event(pygame.K_q, "Quit")
         self.event_mgr.keyboard_event(pygame.K_p, "Print")
         self.event_mgr.keyboard_event(pygame.K_r, "StartGame")
-        self.event_mgr.user_event(EVENT_GAME_TIMER_1, "ClearHint")
+        self.event_mgr.user_event(cdkk.EVENT_GAME_TIMER_1, "ClearHint")
 
 ### --------------------------------------------------
 
@@ -150,5 +149,4 @@ app_config = {
     "caption":"Reversi",
     "auto_start":True
     }
-theApp = BoardGameApp(app_config)
-theApp.execute()
+BoardGameApp(app_config).execute()
