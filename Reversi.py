@@ -1,5 +1,7 @@
 # To Do: "Draw" (no winner) not displayed
 # To Do: Next player is "Draw"
+# To Do: Restart (during game?) not working
+# To Do: Assign keys to Hint and Pass
 
 import cdkk
 import pygame
@@ -136,10 +138,15 @@ class BoardGameApp(cdkk.PyGameApp):
         pygame.display.set_caption("Board Game")
         self.background_fill = "burlywood"
         self.add_sprite_mgr(Manager_Reversi(self.boundary))
-        self.event_mgr.keyboard_event(pygame.K_q, "Quit")
-        self.event_mgr.keyboard_event(pygame.K_p, "Print")
-        self.event_mgr.keyboard_event(pygame.K_r, "StartGame")
-        self.event_mgr.user_event(cdkk.EVENT_GAME_TIMER_1, "ClearHint")
+        key_map = {
+            pygame.K_q : "Quit",
+            pygame.K_p : "Print",
+            pygame.K_r : "StartGame"
+        }
+        user_event_map = {
+            cdkk.EVENT_GAME_TIMER_1 : "ClearHint"
+        }
+        self.event_mgr.event_map(key_event_map=key_map, user_event_map=user_event_map)
 
 ### --------------------------------------------------
 

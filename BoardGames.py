@@ -80,14 +80,14 @@ class Board:
     def print_board(self):
         ysize = len(self._pieces)
         xsize = len(self._pieces[0])
-        logger.debug("+"+"-"*xsize*2+"-+")
+        cdkk.logger.debug("+"+"-"*xsize*2+"-+")
         for i in range(ysize):
             str = "|"
             for j in range(xsize):
                 str = str + " " + self._pieces[i][j]
             str += " |"
-            logger.debug(str)
-        logger.debug("+"+"-"*xsize*2+"-+")
+            cdkk.logger.debug(str)
+        cdkk.logger.debug("+"+"-"*xsize*2+"-+")
 
 ### --------------------------------------------------
 

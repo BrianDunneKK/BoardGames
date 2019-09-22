@@ -147,9 +147,13 @@ class BoardGameApp(cdkk.PyGameApp):
     def init(self):
         super().init()
         self.add_sprite_mgr(Manager_mnkGame(self.boundary))
-        self.event_mgr.keyboard_event(pygame.K_q, "Quit")
-        self.event_mgr.keyboard_event(pygame.K_p, "Print")
-        self.event_mgr.keyboard_event(pygame.K_r, "StartGame")
+        key_map = {
+            pygame.K_q : "Quit",
+            pygame.K_p : "Print",
+            pygame.K_r : "StartGame"
+        }
+        self.event_mgr.event_map(key_event_map=key_map)
+        # cdkk.logger.setLevel(cdkk.logging.DEBUG)
 
 # --------------------------------------------------
 
