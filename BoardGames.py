@@ -116,10 +116,7 @@ class BoardGame (Board):
         self._current_player = (self._current_player + 1) % self._num_players
 
     def player_name(self, player_num):
-        if player_num == 0:
-            return "Draw"
-        else:
-            return self._player_names[player_num-1]
+        return self._player_names[player_num-1]
 
     def player_code(self, player_num):
         return self._player_codes[player_num-1]

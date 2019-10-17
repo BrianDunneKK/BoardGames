@@ -34,7 +34,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
         super().__init__(name)
         board = cdkk.Sprite_BoardGame_Board("Board", {
                                             "fillcolour": None, "altcolour": None, "fillimage": "board.png", "outlinecolour": None})
-        # board = Sprite_BoardGame_Board("Board")
+
         cell_size = int(min((limits.height * 0.75) / MNK_ROWS,
                             (limits.width * 0.75) / MNK_COLS))
         board.setup_board_grid(
@@ -124,6 +124,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
         player = self._mnk_game.current_player_code
         self._next_piece = Sprite_mnkGame_Piece("Next Piece", 3, -1, player)
         self.add(self._next_piece)
+        self._next_player.set_text(self._mnk_game.current_player_name)
 
     def add_piece(self, col, row, player):
         name = "{0:02d}-{1:02d}".format(col, row)
@@ -135,11 +136,6 @@ class Manager_mnkGame(cdkk.SpriteManager):
         self._current_piece = name
         self.add(piece)
 
-    def update(self):
-        super().update()
-        if self._mnk_game.in_progress:
-            self.sprite("Next").set_text(self._mnk_game.current_player_name)
-
 # --------------------------------------------------
 
 
@@ -148,19 +144,18 @@ class BoardGameApp(cdkk.PyGameApp):
         super().init()
         self.add_sprite_mgr(Manager_mnkGame(self.boundary))
         key_map = {
-            pygame.K_q : "Quit",
-            pygame.K_p : "Print",
-            pygame.K_r : "StartGame"
+            pygame.K_q: "Quit",
+            pygame.K_p: "Print",
+            pygame.K_r: "StartGame"
         }
         self.event_mgr.event_map(key_event_map=key_map)
-        # cdkk.logger.setLevel(cdkk.logging.DEBUG)
 
 # --------------------------------------------------
 
 
 app_config = {
     "full_screen": True,
-    "background_fill": "darkslategray4",
+    "background_fill": "gray65",
     "caption": "Board Game",
     "image_path": "BoardGames\\Images\\"
 }
