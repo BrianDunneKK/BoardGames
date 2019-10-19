@@ -419,7 +419,7 @@ class BoardGame_mnkGame(BoardGame):
 
 
 class BoardGame_Mastermind(BoardGame):
-    def __init__(self, code=None, holes=4, guesses=12, options=6):
+    def __init__(self, holes=4, guesses=12, options=6, code=None):
         super().__init__(holes*2, guesses, num_players=1)
         self._holes = holes
         self._guesses = guesses

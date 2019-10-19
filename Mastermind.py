@@ -1,9 +1,7 @@
-import cdkk
 from BoardGames import *
 
-mm = BoardGame_Mastermind(guesses=3)
+mm = BoardGame_Mastermind()  # holes=4, guesses=12, options=6, code=None
 print(mm.to_str()+"\n")
-# print(mm.code)
 while(mm.in_progress):
     code_guess = input("Enter your 4-digit guess: ")
     (ch, go) = mm.play_piece(context={"guess": code_guess})
