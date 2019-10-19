@@ -1,4 +1,5 @@
 import cdkk
+import random
 
 class Board:
     def __init__(self, xsize, ysize):
@@ -77,6 +78,28 @@ class Board:
     def count_blanks(self):
         return self.count_pieces(".")
 
+    def to_str(self, rotate=False):
+        board_str = ""
+        ysize = len(self._pieces)
+        xsize = len(self._pieces[0])
+        if not rotate:
+            board_str = "+" + "-"*xsize*2 + "-+\n"
+            for i in range(ysize):
+                board_str += "|"
+                for j in range(xsize):
+                    board_str += " " + self._pieces[i][j]
+                board_str += " |\n"
+            board_str += "+" + "-"*xsize*2 + "-+"
+        else:
+            board_str = "+" + "-"*ysize*2 + "-+\n"
+            for i in range(xsize):
+                board_str += "|"
+                for j in range(ysize):
+                    board_str += " " + self._pieces[j][i]
+                board_str += " |\n"
+            board_str += "+" + "-"*ysize*2 + "-+"
+        return board_str
+
     def print_board(self):
         ysize = len(self._pieces)
         xsize = len(self._pieces[0])
@@ -99,6 +122,8 @@ class BoardGame (Board):
         self._game_over = False
         self._player_codes = [str(x+1) for x in range(num_players)]
         self._player_names = ["Player {0}".format(x+1) for x in range(num_players)]
+        self._current_context = None
+        self._turn_num = 0
 
     @property
     def in_progress(self):
@@ -111,6 +136,14 @@ class BoardGame (Board):
     @property
     def current_player(self):
         return self._current_player
+
+    @property
+    def current_context(self):
+        return self._current_context
+
+    @property
+    def turn_num(self):
+        return self._turn_num
 
     def next_player(self):
         self._current_player = (self._current_player + 1) % self._num_players
@@ -153,6 +186,7 @@ class BoardGame (Board):
         super().setup()
         self._current_player = 1
         self._game_over = False
+        self._turn_num = 0
 
     def count_player_pieces(self, player_num):
         return self.count_pieces(self.player_code(player_num))
@@ -181,11 +215,13 @@ class BoardGame (Board):
         winner = None
         return winner
 
-    def play_piece(self, col, row):
+    def play_piece(self, col=0, row=0, context=None):
+        self._current_context = context
         c, r = (col, row)
         changes = None
         valid_move = self.valid_play(col, row)
         if valid_move:
+            self._turn_num += 1
             c, r = self.calculate_play(col, row)
             consequences = self.execute_play(c,r)
             self.manage_consequences(c, r, consequences)
@@ -223,7 +259,7 @@ class Directions:
 
 ### --------------------------------------------------
 
-class Board_Reversi(BoardGame):
+class BoardGame_Reversi(BoardGame):
     def __init__(self, xsize, ysize, names=["Black", "White"]):
         super().__init__(xsize, ysize)
         self.set_player_names(names)
@@ -326,7 +362,7 @@ class Board_Reversi(BoardGame):
 
 ### --------------------------------------------------
 
-class Board_mnkGame(BoardGame):
+class BoardGame_mnkGame(BoardGame):
     def __init__(self, xsize, ysize, inarow, names=["Red", "Yellow"]):
         super().__init__(xsize, ysize)
         self._inarow = inarow
@@ -378,3 +414,94 @@ class Board_mnkGame(BoardGame):
             winner = self.player_by_code(player)
 
         return winner
+
+# --------------------------------------------------
+
+
+class BoardGame_Mastermind(BoardGame):
+    def __init__(self, code=None, holes=4, guesses=12, options=6):
+        super().__init__(holes*2, guesses, num_players=1)
+        self._holes = holes
+        self._guesses = guesses
+        self._options = options
+        self._code = None
+        self.code = code
+
+    @property
+    def code(self):
+        return "".join(self._code)
+
+    @code.setter
+    def code(self, new_code):
+        if new_code is None:
+            # Random code
+            self._code = []
+            for i in range(self._holes):
+                self._code.append(str(random.randint(1,self._options)))
+        else:
+            self._code = list(new_code)
+
+    def calculate_play(self, col, row):
+        score = ""
+        guess = list(self.current_context["guess"])
+        code = self._code.copy()
+
+        # Check for exact match
+        for i in range(self._holes):
+            if guess[i] == code[i]:
+                score += "B"
+                guess[i] = " "
+                code[i] = " "
+
+        # Check for misplaced match
+        for i in range(self._holes):
+            if guess[i] != " ":
+                for j in range(self._holes):
+                    if guess[i] == code[j]:
+                        score += "W"
+                        guess[i] = ""
+                        code[j] = " "
+
+        if len(score) < 4:
+            score += " " * (4-len(score))
+        self._current_context["score"] = score
+
+        return (col, row)
+
+    def execute_play(self, col, row):
+        guess_score = self.current_context["guess"] + self.current_context["score"]
+        for i in range(self._holes*2):
+            self.set_piece(i, self.turn_num-1, guess_score[i])
+        return None
+
+    def game_over(self, player, col, row):
+        # Return: Winner's number; 0 = Draw; None = No winner
+        winner = None
+
+        if self._current_context["score"] == "BBBB":
+            winner = "1" # Code breaker
+        elif self.turn_num == self._guesses:
+            winner = "2" # Code maker
+
+        self._game_over = (winner is not None)
+
+        return winner
+
+    def to_str(self, rotate=False):
+        # To Do: Rotate not supported
+        board_str = ""
+        ysize = len(self._pieces)
+        xsize = len(self._pieces[0])
+        if not rotate:
+            board_str = "+" + "-"*(xsize*2+1) + "-+\n"
+            for i in range(ysize):
+                board_str += "|"
+                for j in range(xsize):
+                    board_str += " " + self._pieces[i][j]
+                    if j == (xsize/2 - 1):
+                        board_str += " "
+                board_str += " |\n"
+            board_str += "+" + "-"*(xsize*2+1) + "-+"
+        return board_str
+
+# --------------------------------------------------

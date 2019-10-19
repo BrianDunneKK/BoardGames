@@ -43,7 +43,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
         self.add(board, layer=9)
         Sprite_mnkGame_Piece.mnkGame_board = board
 
-        self._mnk_game = Board_mnkGame(MNK_COLS, MNK_ROWS, MNK_INAROW)
+        self._mnk_game = BoardGame_mnkGame(MNK_COLS, MNK_ROWS, MNK_INAROW)
         self._mnk_game.setup()
         self._current_piece = None
 

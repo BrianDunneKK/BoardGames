@@ -29,7 +29,7 @@ class Manager_Reversi(cdkk.SpriteManager):
         board.rect.center = limits.center
         self.add(board)
 
-        self._reversi = Board_Reversi(8, 8)
+        self._reversi = BoardGame_Reversi(8, 8)
         self._reversi.setup()
 
         label_style = {"fillcolour": None, "width": 200, "height": 35}
