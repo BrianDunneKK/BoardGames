@@ -441,32 +441,55 @@ class BoardGame_Mastermind(BoardGame):
         else:
             self._code = list(new_code)
 
+    def to_str(self, rotate=False):
+        # To Do: Rotate not supported
+        board_str = ""
+        ysize = len(self._pieces)
+        xsize = len(self._pieces[0])
+        if not rotate:
+            board_str = "+" + "-"*(xsize*2+1) + "-+\n"
+            for i in range(ysize):
+                board_str += "|"
+                for j in range(xsize):
+                    board_str += " " + self._pieces[i][j]
+                    if j == (xsize/2 - 1):
+                        board_str += " "
+                board_str += " |\n"
+            board_str += "+" + "-"*(xsize*2+1) + "-+"
+        return board_str
+
     def calculate_play(self, col, row):
-        score = ""
         guess = list(self.current_context["guess"])
-        code = self._code.copy()
+        self._current_context["score"] = self.calculate_score(guess, self._code)
+        return (col, row)
+
+    def calculate_score(self, guess, code):
+        score = ""
+        
+        # Copy lists before changing
+        code2 = code.copy()
+        guess2 = guess.copy()
 
         # Check for exact match
         for i in range(self._holes):
-            if guess[i] == code[i]:
+            if guess2[i] == code2[i]:
                 score += "B"
-                guess[i] = " "
-                code[i] = " "
+                guess2[i] = " "
+                code2[i] = " "
 
         # Check for misplaced match
         for i in range(self._holes):
-            if guess[i] != " ":
+            if guess2[i] != " ":
                 for j in range(self._holes):
-                    if guess[i] == code[j]:
+                    if guess2[i] == code2[j]:
                         score += "W"
-                        guess[i] = ""
-                        code[j] = " "
+                        guess2[i] = ""
+                        code2[j] = " "
 
         if len(score) < 4:
             score += " " * (4-len(score))
-        self._current_context["score"] = score
 
-        return (col, row)
+        return score
 
     def execute_play(self, col, row):
         guess_score = self.current_context["guess"] + self.current_context["score"]
@@ -486,22 +509,5 @@ class BoardGame_Mastermind(BoardGame):
         self._game_over = (winner is not None)
 
         return winner
-
-    def to_str(self, rotate=False):
-        # To Do: Rotate not supported
-        board_str = ""
-        ysize = len(self._pieces)
-        xsize = len(self._pieces[0])
-        if not rotate:
-            board_str = "+" + "-"*(xsize*2+1) + "-+\n"
-            for i in range(ysize):
-                board_str += "|"
-                for j in range(xsize):
-                    board_str += " " + self._pieces[i][j]
-                    if j == (xsize/2 - 1):
-                        board_str += " "
-                board_str += " |\n"
-            board_str += "+" + "-"*(xsize*2+1) + "-+"
-        return board_str
 
 # --------------------------------------------------
