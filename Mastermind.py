@@ -1,89 +1,103 @@
-import sys
-sys.path.insert(0, "cdkk")
 import cdkk
 import pygame
 from BoardGames import *
 
-
 MM_HOLES = 4
-MM_GUESSES = 12
+MM_TURNS = 12
 MM_OPTIONS = 6
 
 # --------------------------------------------------
 
 
-class Sprite_Peg(cdkk.Sprite_Shape):
-    default_style = {
-        "fillcolour": None, "outlinecolour": "black", "outlinewidth": 1, "shape": "Ellipse"}
-
-    def __init__(self, rect, colour, ev_click=None, style=None):
-        super().__init__("Peg", rect, style=cdkk.merge_dicts(
-            Sprite_Peg.default_style, {"fillcolour": colour}, style))
-        self.setup_mouse_events(ev_click)
-
-
-class Sprite_CodePeg(Sprite_Peg):
+class Sprite_CodePeg(cdkk.Sprite_Shape):
+    default_style = {"fillcolour": None, "outlinecolour": "gray50",
+                     "outlinewidth": 1, "shape": "Ellipse"}
     colours = ["red2", "blue", "yellow1", "green3", "magenta", "orange",
                "black", "darkorchid3", "gray50"]
 
-    def __init__(self, rect, code=None, ev_click=None, enable=True):
-        colour = None if code is None else Sprite_CodePeg.colours[code]
-        style = {} if enable else { "outlinecolour":"gray50"}
-        super().__init__(rect, colour, ev_click, style)
+    def __init__(self, rect, ev_click=None, turn=None):
+        super().__init__("CodePeg", rect, style=Sprite_CodePeg.default_style)
+        self.setup_mouse_events(ev_click)
+        self._code = None
+        self.set_desc("turn", turn)
 
-
-class Sprite_ScorePeg(Sprite_Peg):
-    colours = ["black", "white"]
-
-    def __init__(self, rect, score=None):
-        colour = None if score is None else Sprite_ScorePeg.colours[score]
-        style = None if colour is not None else {
-            "outlinecolour": "sepia", "shape": "Rectangle"}
-        super().__init__(rect, colour, style=style)
-
-
-class Sprite_PegPicker(Sprite_CodePeg):
-    def __init__(self, rect):
-        super().__init__(rect, None)
-        self._selection = None
+    def enable(self, enable=True):
+        outline = "black" if enable else "gray50"
+        self.set_style("outlinecolour", outline)
 
     @property
-    def selection(self):
-        return self._selection
+    def code(self):
+        return self._code
 
-    @selection.setter
-    def selection(self, new_selection):
-        self._selection = new_selection
-        if new_selection is not None:
-            self.set_style("fillcolour", Sprite_CodePeg.colours[new_selection])
-        else:
-            self.set_style("fillcolour", None)
+    @code.setter
+    def code(self, new_code):
+        self._code = new_code
+        fill = None if new_code is None else Sprite_CodePeg.colours[new_code]
+        self.set_style("fillcolour", fill)
+        self.draw(cdkk.Sprite.DRAW_AFTER_CLEAR)
+
+
+class Sprite_ScorePeg(cdkk.Sprite_Shape):
+    default_style = {"fillcolour": None, "outlinecolour": "sepia",
+                     "outlinewidth": 1, "shape": "Rectangle"}
+    colours = ["white", "black"]
+
+    def __init__(self, rect, turn=None):
+        super().__init__("ScorePeg", rect, style=Sprite_ScorePeg.default_style)
+        self._score = None
+        self.set_desc("turn", turn)
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, new_score):
+        self._score = int(new_score) if new_score != " " else -1
+        fill = None if self.score < 0 else Sprite_ScorePeg.colours[self.score]
+        self.set_style("fillcolour", fill)
+        self.draw(cdkk.Sprite.DRAW_AFTER_CLEAR)
 
 
 class Sprite_CodePeg_Set(cdkk.SpriteGridSet):
-    def __init__(self, guess, rect, xcols=None, yrows=1, evl_click=None, enable_num=None):
-        if xcols is None:
-            xcols = len(guess)
-        super().__init__("Guess", rect, xcols, yrows, margin=10)
+    def __init__(self, turn, rect, xcols, yrows=1, evl_click=None, peg_name=None):
+        super().__init__("GuessPegs", rect, xcols, yrows, margin=10)
         for i in range(xcols):
             for j in range(yrows):
                 offset = i+j*xcols
-                enable = True if enable_num is None else (j==enable_num)
-                guess_peg = None if guess is None else guess[offset]
                 ev_click = None if evl_click is None else evl_click[offset]
-                peg = Sprite_CodePeg(rect, guess_peg, ev_click, enable)
+                peg = Sprite_CodePeg(rect, ev_click, turn)
+                if peg_name is not None:
+                    peg.set_desc("name", peg_name)
                 self.add_shape_xy(peg, i, j)
+
+    def update(self, guess):
+        for i in range(len(guess)):
+            x = i % self.xcols
+            y = (i - x) // self.xcols
+            s = self.find_shape_xy(x, y)
+            s.code = guess[i]
+
+    def enable(self, enable=True):
+        for s in self.sprites():
+            s.enable()
 
 
 class Sprite_ScorePeg_Set(cdkk.SpriteGridSet):
-    def __init__(self, scores, rect, xcols, yrows):
-        super().__init__("Score", rect, xcols, yrows, margin=2)
+    def __init__(self, turn, rect, xcols, yrows):
+        super().__init__("ScorePegs", rect, xcols, yrows, margin=2)
         for i in range(xcols):
             for j in range(yrows):
                 offset = i+j*xcols
-                score_peg = None if scores is None else scores[offset]
-                peg = Sprite_ScorePeg(rect, score_peg)
+                peg = Sprite_ScorePeg(rect, turn)
                 self.add_shape_xy(peg, i, j)
+
+    def update(self, score):
+        for i in range(len(score)):
+            x = i % self.xcols
+            y = (i - x) // self.yrows
+            s = self.find_shape_xy(x, y)
+            s.score = score[i]
 
 # --------------------------------------------------
 
@@ -91,44 +105,43 @@ class Sprite_ScorePeg_Set(cdkk.SpriteGridSet):
 class Manager_Mastermind(cdkk.SpriteManager):
     def __init__(self, limits, name="Board Manager"):
         super().__init__(name)
-        self._mm_game = BoardGame_Mastermind(MM_HOLES, MM_GUESSES, MM_OPTIONS)
+        self._mm_game = BoardGame_Mastermind(MM_HOLES, MM_TURNS, MM_OPTIONS)
 
         # --- Set up the board
-        self.cp_hole_size = int(min((limits.height * 0.9) / MM_GUESSES,
+        self.cp_hole_size = int(min((limits.height * 0.9) / MM_TURNS,
                                     (limits.width * 0.9) / MM_HOLES))
 
-        self._board_rect = cdkk.cdkkRect(0, 0, (self.cp_hole_size+self.sp_hole_size)*MM_HOLES + 10,
-                                         self.cp_hole_size*MM_GUESSES+10)
+        self._board_rect = cdkk.cdkkRect(
+            0, 0, (self.cp_hole_size+self.sp_hole_size)*MM_HOLES + 10, self.cp_hole_size*MM_TURNS+10)
         self._board_rect.center = limits.center
-        codes_rect = cdkk.cdkkRect(self._board_rect.left + 20, self._board_rect.top + 10,
-                                   self.cp_hole_size*MM_HOLES, self.cp_hole_size*MM_GUESSES)
+        self.add(cdkk.Sprite_Shape("Board Background", self._board_rect, {
+                 "fillcolour": "tan4", "outlinecolour": None}))
 
-        self.add(cdkk.Sprite_Shape("Board Background", self._board_rect,
-                                   {"fillcolour": "tan4", "outlinecolour": None}))
-
-        evl_click = []
-        for i in range(MM_GUESSES):
+        # --- Set up each turn
+        for i in range(MM_TURNS):
+            evl_click = []
             for j in range(MM_HOLES):
-                evl_click.append(cdkk.EventManager.gc_event(
-                    "SelectPegHole", guess=(i, j)))
-        self.add(Sprite_CodePeg_Set(None, codes_rect,
-                                    MM_HOLES, MM_GUESSES, evl_click, self._mm_game.turn_num))
+                evl_click.append(cdkk.EventManager.gc_event("PlaceCodePeg",
+                                                            guess=(i, j)))
 
-        for i in range(MM_GUESSES):
-            self.add(Sprite_ScorePeg_Set(None, self.score_pegs_rect(i),
-                                         xcols=int((MM_HOLES+1)/2), yrows=2))
+            self.add(Sprite_CodePeg_Set(i, self.code_peg_rect(
+                i), MM_HOLES, evl_click=evl_click))
+            self.add(Sprite_ScorePeg_Set(i, self.score_pegs_rect(i),
+                                         int((MM_HOLES+1)/2), 2))
 
-        # --- Peg choice options and picker
+        # --- Code peg options and picker
         options = [i for i in range(MM_OPTIONS)]
         evl_click = [cdkk.EventManager.gc_event(
-            "SelectPeg", guess=i) for i in range(MM_OPTIONS)]
+            "SelectCodePeg", guess=i) for i in range(MM_OPTIONS)]
         options_rect = cdkk.cdkkRect(limits.left+limits.width*0.2,
                                      limits.top+limits.height/2-self.cp_hole_size*MM_OPTIONS/2,
                                      self.cp_hole_size-10, self.cp_hole_size*MM_OPTIONS)
-        self.add(Sprite_CodePeg_Set(
-            options, options_rect, 1, MM_OPTIONS, evl_click))
+        cp = Sprite_CodePeg_Set(999, options_rect, 1,
+                                MM_OPTIONS, evl_click, "CodePegOptions")
+        cp.update(options)
+        self.add(cp)
 
-        self._peg_picker = Sprite_PegPicker(self.code_peg_rect(0, 0))
+        self._peg_picker = Sprite_CodePeg(self.code_peg_rect(0, 0))
         self.add(self._peg_picker)
 
         # --- Set up controls
@@ -148,31 +161,9 @@ class Manager_Mastermind(cdkk.SpriteManager):
         rect.top = limits.height/2 + button_height*2
         self.add(cdkk.Sprite_Button("Quit", rect, ev_Quit))
 
-        # rect = cdkk.cdkkRect(50, self._board_rect.top,
-        #                      self._board_rect.left-100, 80)
-        # self.add(cdkk.Sprite_TextBox("Instructions", rect,
-        #                              {"textcolour": "black", "textsize": 40, "fillcolour": "yellow1", "outlinecolour": "black"}))
-
-        winner_style = {"textcolour": "red3", "textsize": 48, "fillcolour": "yellow1",
-                        "outlinecolour": "red3", "width": 400, "height": 80}
-        self._winner = cdkk.Sprite_DynamicText("Winner", rect=cdkk.cdkkRect(
-            limits.width/2-200, 25, 400, 70), style=winner_style)
-        self._winner.set_text_format("Winner: {0}", "")
+        self._winner = cdkk.Sprite_GameOver(limits)
 
         self.start_game()
-
-        # Fill all holes
-        # guesses = [random.randint(0, MM_OPTIONS-1)
-        #            for i in range(MM_GUESSES*MM_HOLES)]
-        # self.add(Sprite_CodePeg_Set(guesses, codes_rect, MM_HOLES, MM_GUESSES))
-        # for i in range(MM_GUESSES):
-        #     score = []
-        #     for j in range(MM_HOLES):
-        #         if random.randint(0, 2) == 0:
-        #             score.append(random.randint(0, 1))
-        #         else:
-        #             score.append(None)
-        #     # self.add(Sprite_ScorePeg_Set(score, self.score_peg_rl(i)))
 
     @property
     def cp_hole_size(self):
@@ -188,37 +179,74 @@ class Manager_Mastermind(cdkk.SpriteManager):
     def cp_hole_size(self, new_hole_size):
         self._cp_hole_size = new_hole_size
 
-    def code_peg_rect(self, guess, peg):
-        return cdkk.cdkkRect(self._board_rect.left + self.cp_hole_size*peg + 20,
-                             self._board_rect.top + self.cp_hole_size*guess + 10,
-                             self.cp_hole_size-10, self.cp_hole_size-10)
+    def code_peg_rect(self, turn, peg=None):
+        if peg is None:
+            return cdkk.cdkkRect(self._board_rect.left + 20,
+                                 self._board_rect.top + self.cp_hole_size*turn + 10,
+                                 self.cp_hole_size*MM_HOLES, self.cp_hole_size-10)
+        else:
+            return cdkk.cdkkRect(self._board_rect.left + self.cp_hole_size*peg + 20,
+                                 self._board_rect.top + self.cp_hole_size*turn + 10,
+                                 self.cp_hole_size-10, self.cp_hole_size-10)
 
-    def score_pegs_rect(self, guess):
+    def score_pegs_rect(self, turn):
         rect = cdkk.cdkkRect(self._board_rect.left + self.cp_hole_size*MM_HOLES + 30,
-                             self._board_rect.top + self.cp_hole_size*guess +
+                             self._board_rect.top + self.cp_hole_size*turn +
                              10 + self.cp_hole_size/2 - self.sp_hole_size,
                              self.sp_hole_size*2-2, self.sp_hole_size*2-2)
         return rect
 
-    # def score_peg_rect(self, guess, peg):
-    #     rect = self.code_peg_rect(guess, MM_HOLES-1)
-    #     rect.left = rect.right + 30
-    #     rect.top = rect.centery - 2 - self.sp_hole_size
-    #     rect.size = (self.sp_hole_size-2, self.sp_hole_size-2)
+    def clear_guess(self):
+        self._current_guess = [None] * MM_HOLES
 
-    #     if peg < MM_HOLES/2:
-    #         rect.top = rect.bottom + 4
+    def set_guess(self, guess, hole, option):
+        if guess == self._mm_game.turn_num:
+            self._current_guess[hole] = option
+            self._current_codes.update(self._current_guess)
+        return (guess == self._mm_game.turn_num)
 
-    #     peg = peg % int((MM_HOLES+1)/2)
-    #     rect.left += self.sp_hole_size * peg
+    def find_current_pegs(self):
+        self._current_codes = None
+        self._current_scores = None
 
-    #     return rect
+        sprites = self.find_sprites_by_desc("name", "CodePeg",
+                                            "turn", self._mm_game.turn_num)
+        if len(sprites) > 0:
+            for grp in sprites[0].groups():
+                if isinstance(grp, Sprite_CodePeg_Set):
+                    self._current_codes = grp
+        if self._current_codes is not None:
+            self._current_codes.enable()
+
+        sprites = self.find_sprites_by_desc("name", "ScorePeg",
+                                            "turn", self._mm_game.turn_num)
+        if len(sprites) > 0:
+            for grp in sprites[0].groups():
+                if isinstance(grp, Sprite_ScorePeg_Set):
+                    self._current_scores = grp
+
+    def clear_board(self):
+        self.remove(self._winner)
+        for s in self.find_sprites_by_desc("name", "CodePeg"):
+            s.code = None
+            s.enable(False)
+
+        for s in self.find_sprites_by_desc("name", "ScorePeg"):
+            s.score = " "
 
     def start_game(self):
+        self.clear_board()
         super().start_game()
-        self.remove(self._winner)  # Hide Game Over
+        self._mm_game.start_game()
+        self.clear_guess()
+        self._current_codes = None
+        self.find_current_pegs()
 
     def end_game(self):
+        if self._mm_game.current_context["game over"] == "1":
+            self._winner.text = "You won!"
+        else:
+            self._winner.text = "You lost!"
         self.add(self._winner)
         super().end_game()
 
@@ -233,11 +261,23 @@ class Manager_Mastermind(cdkk.SpriteManager):
                     self._peg_picker.invisible = False
                     self._peg_picker.rect.move_to(x, y)
                 dealt_with = True
-            elif e.action == "SelectPeg":
-                self._peg_picker.selection = e.info["guess"]
-            elif e.action == "SelectPegHole":
+            elif e.action == "SelectCodePeg":
+                self._peg_picker.code = e.info["guess"]
+            elif e.action == "PlaceCodePeg":
                 (guess, hole) = e.info["guess"]
-                self._peg_picker.selection = None
+                if self.set_guess(guess, hole, self._peg_picker.code):
+                    self._peg_picker.code = None
+            elif e.action == "GuessCode":
+                outcome = self._mm_game.play_piece(
+                    context={"guess": self._current_guess})
+                self._current_scores.update(outcome["score"])
+                if outcome["game over"] is None:
+                    self.clear_guess()
+                    self.find_current_pegs()
+                    print(self._mm_game.to_str()+"\n")
+                    print(self._mm_game.code)
+                else:
+                    cdkk.EventManager.post_game_control("GameOver")
 
         return dealt_with
 
@@ -250,7 +290,7 @@ class BoardGameApp(cdkk.PyGameApp):
         self.add_sprite_mgr(Manager_Mastermind(self.boundary))
         key_map = {
             pygame.K_q: "Quit",
-            pygame.K_r: "StartGame"
+            pygame.K_s: "StartGame"
         }
         self.event_mgr.event_map(key_event_map=key_map)
 
@@ -258,7 +298,6 @@ class BoardGameApp(cdkk.PyGameApp):
 
 
 app_config = {
-    # "full_screen": True,
     "background_fill": "gray65",
     "caption": "Mastermind",
     "image_path": "BoardGames\\Images\\"

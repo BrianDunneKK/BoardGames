@@ -19,7 +19,7 @@ class Board:
     def ysize(self):
         return self._size[1]
 
-    def setup(self):
+    def start_game(self):
         self.clear_board()
 
     def get_piece(self, x, y):
@@ -114,7 +114,7 @@ class Board:
 
 ### --------------------------------------------------
 
-class BoardGame (Board):
+class BoardGame(Board):
     def __init__(self, xsize, ysize, num_players=2):
         super().__init__(xsize, ysize)
         self._num_players = num_players
@@ -182,8 +182,8 @@ class BoardGame (Board):
         for i in range(num):
             self._player_codes[i] = player_codes[i]
 
-    def setup(self):
-        super().setup()
+    def start_game(self):
+        super().start_game()
         self._current_player = 1
         self._game_over = False
         self._turn_num = 0
@@ -216,25 +216,23 @@ class BoardGame (Board):
         return winner
 
     def play_piece(self, col=0, row=0, context=None):
-        self._current_context = context
+        self._current_context = cdkk.merge_dicts(context, {"turn":self._turn_num, "changes":None})
         c, r = (col, row)
-        changes = None
         valid_move = self.valid_play(col, row)
         if valid_move:
             self._turn_num += 1
             c, r = self.calculate_play(col, row)
             consequences = self.execute_play(c,r)
             self.manage_consequences(c, r, consequences)
-            changes = self.calculate_changes(c, r, consequences)
+            self._current_context["changes"] = self.calculate_changes(c, r, consequences)
             p = self.current_player_code
             self.next_player()
         else:
             p = None
 
+        self._current_context["game over"] = self.game_over(p, c, r)
 
-        go = self.game_over(p, c, r)
-
-        return (changes, go)
+        return self._current_context
 
 ### --------------------------------------------------
 
@@ -264,8 +262,8 @@ class BoardGame_Reversi(BoardGame):
         super().__init__(xsize, ysize)
         self.set_player_names(names)
 
-    def setup(self):
-        super().setup()
+    def start_game(self):
+        super().start_game()
         self._pieces[3][3] = self.player_code(2)
         self._pieces[3][4] = self.player_code(1)
         self._pieces[4][4] = self.player_code(2)
@@ -419,25 +417,30 @@ class BoardGame_mnkGame(BoardGame):
 
 
 class BoardGame_Mastermind(BoardGame):
-    def __init__(self, holes=4, guesses=12, options=6, code=None):
+    def __init__(self, holes=4, guesses=12, options=6, allow_repeats=False, code=None):
         super().__init__(holes*2, guesses, num_players=1)
         self._holes = holes
         self._guesses = guesses
         self._options = options
+        self._allow_repeats = allow_repeats
         self._code = None
         self.code = code
 
     @property
     def code(self):
-        return "".join(self._code)
+        # return "".join(self._code)
+        return "".join(str(n) for n in self._code)
 
     @code.setter
     def code(self, new_code):
         if new_code is None:
             # Random code
-            self._code = []
-            for i in range(self._holes):
-                self._code.append(str(random.randint(1,self._options)))
+            if self._allow_repeats:
+                self._code = []
+                for i in range(self._holes):
+                    self._code.append(random.randint(0,self._options-1))
+            else:
+                self._code = random.sample(range(self._options), self._holes)
         else:
             self._code = list(new_code)
 
@@ -459,8 +462,7 @@ class BoardGame_Mastermind(BoardGame):
         return board_str
 
     def calculate_play(self, col, row):
-        guess = list(self.current_context["guess"])
-        self._current_context["score"] = self.calculate_score(guess, self._code)
+        self._current_context["score"] = self.calculate_score(self.current_context["guess"], self._code)
         return (col, row)
 
     def calculate_score(self, guess, code):
@@ -473,18 +475,18 @@ class BoardGame_Mastermind(BoardGame):
         # Check for exact match
         for i in range(self._holes):
             if guess2[i] == code2[i]:
-                score += "B"
-                guess2[i] = " "
-                code2[i] = " "
+                score += "1"
+                guess2[i] = None
+                code2[i] = None
 
         # Check for misplaced match
         for i in range(self._holes):
-            if guess2[i] != " ":
+            if guess2[i] is not None:
                 for j in range(self._holes):
-                    if guess2[i] == code2[j]:
-                        score += "W"
-                        guess2[i] = ""
-                        code2[j] = " "
+                    if code2[j] is not None and guess2[i] == code2[j]:
+                        score += "0"
+                        guess2[i] = None
+                        code2[j] = None
 
         if len(score) < 4:
             score += " " * (4-len(score))
@@ -492,7 +494,8 @@ class BoardGame_Mastermind(BoardGame):
         return score
 
     def execute_play(self, col, row):
-        guess_score = self.current_context["guess"] + self.current_context["score"]
+        guess = "".join(str(n) for n in self.current_context["guess"])
+        guess_score = guess + self.current_context["score"]
         for i in range(self._holes*2):
             self.set_piece(i, self.turn_num-1, guess_score[i])
         return None
@@ -501,7 +504,7 @@ class BoardGame_Mastermind(BoardGame):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
 
-        if self._current_context["score"] == "BBBB":
+        if self._current_context["score"] == "1111":
             winner = "1" # Code breaker
         elif self.turn_num == self._guesses:
             winner = "2" # Code maker

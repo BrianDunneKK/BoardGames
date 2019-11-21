@@ -44,7 +44,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
         Sprite_mnkGame_Piece.mnkGame_board = board
 
         self._mnk_game = BoardGame_mnkGame(MNK_COLS, MNK_ROWS, MNK_INAROW)
-        self._mnk_game.setup()
+        self._mnk_game.start_game()
         self._current_piece = None
 
         _next_player_style = {"fillcolour": None, "align_horiz": "L"}
@@ -71,7 +71,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
     def start_game(self):
         super().start_game()
         self.remove_by_class("Sprite_mnkGame_Piece")
-        self._mnk_game.setup()
+        self._mnk_game.start_game()
         for p in self._mnk_game.pieces:
             self.add_piece(p[0], p[1], p[2])
         self._next_piece = None
@@ -108,11 +108,13 @@ class Manager_mnkGame(cdkk.SpriteManager):
         return dealt_with
 
     def play_piece(self, col):
-        changes, go = self._mnk_game.play_piece(col, 0)
+        outcome = self._mnk_game.play_piece(col, 0)
+        changes = outcome["changes"]
         if changes is not None:
             for c in changes:
                 if c[3] == "add":
                     self.add_piece(c[0], c[1], c[2])
+        go = outcome["game over"]
         if go is not None:  # Game Over
             self._winner.set_text(self._mnk_game.player_name(go))
             cdkk.EventManager.post_game_control("GameOver")
