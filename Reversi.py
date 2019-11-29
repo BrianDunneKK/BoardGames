@@ -86,7 +86,7 @@ class Manager_Reversi(cdkk.SpriteManager):
             limits.width * 0.8, limits.height * 0.95)
 
     def start_game(self):
-        self.remove_by_class("Sprite_BoardGame_Piece")
+        self.kill_sprites_by_desc("class", "Sprite_BoardGame_Piece")
         self.remove(self._winner)  # Hide Game Over
         self._reversi.start_game()
         for p in self._reversi.pieces:

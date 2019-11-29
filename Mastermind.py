@@ -6,17 +6,21 @@ MM_HOLES = 4
 MM_TURNS = 12
 MM_OPTIONS = 6
 
+app_styles = {
+    "CodePeg": {"fillcolour": None, "outlinecolour": "gray50", "outlinewidth": 1, "shape": "Ellipse"},
+    "ScorePeg": {"fillcolour": None, "outlinecolour": "sepia", "outlinewidth": 1, "shape": "Rectangle"}
+}
+cdkk.stylesheet.add_stylesheet(app_styles)
+
 # --------------------------------------------------
 
 
 class Sprite_CodePeg(cdkk.Sprite_Shape):
-    default_style = {"fillcolour": None, "outlinecolour": "gray50",
-                     "outlinewidth": 1, "shape": "Ellipse"}
     colours = ["red2", "blue", "yellow1", "green3", "magenta", "orange",
                "black", "darkorchid3", "gray50"]
 
     def __init__(self, rect, ev_click=None, turn=None):
-        super().__init__("CodePeg", rect, style=Sprite_CodePeg.default_style)
+        super().__init__("CodePeg", rect, style=cdkk.stylesheet.style("CodePeg"))
         self.setup_mouse_events(ev_click)
         self._code = None
         self.set_desc("turn", turn)
@@ -38,12 +42,10 @@ class Sprite_CodePeg(cdkk.Sprite_Shape):
 
 
 class Sprite_ScorePeg(cdkk.Sprite_Shape):
-    default_style = {"fillcolour": None, "outlinecolour": "sepia",
-                     "outlinewidth": 1, "shape": "Rectangle"}
     colours = ["white", "black"]
 
     def __init__(self, rect, turn=None):
-        super().__init__("ScorePeg", rect, style=Sprite_ScorePeg.default_style)
+        super().__init__("ScorePeg", rect, style=cdkk.stylesheet.style("ScorePeg"))
         self._score = None
         self.set_desc("turn", turn)
 
