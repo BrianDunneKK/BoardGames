@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, "cdkk")
 import cdkk
 import pygame
 from BoardGames import *
@@ -30,10 +32,7 @@ class Sprite_mnkGame_Piece(cdkk.Sprite_BoardGame_Piece):
         self.rect.multiplier = 100
         if player != '1':
             self.flip()
-
-    def update(self):
-        super().update()
-        self.rect.move_physics()
+        self.set_config("auto_move_physics", True)
 
 # --------------------------------------------------
 

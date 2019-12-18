@@ -23,7 +23,7 @@ class Sprite_CodePeg(cdkk.Sprite_Shape):
         super().__init__("CodePeg", rect, style=cdkk.stylesheet.style("CodePeg"))
         self.setup_mouse_events(ev_click)
         self._code = None
-        self.set_desc("turn", turn)
+        self.set_config("turn", turn)
 
     def enable(self, enable=True):
         outline = "black" if enable else "gray50"
@@ -47,7 +47,7 @@ class Sprite_ScorePeg(cdkk.Sprite_Shape):
     def __init__(self, rect, turn=None):
         super().__init__("ScorePeg", rect, style=cdkk.stylesheet.style("ScorePeg"))
         self._score = None
-        self.set_desc("turn", turn)
+        self.set_config("turn", turn)
 
     @property
     def score(self):
@@ -70,7 +70,7 @@ class Sprite_CodePeg_Set(cdkk.SpriteGridSet):
                 ev_click = None if evl_click is None else evl_click[offset]
                 peg = Sprite_CodePeg(rect, ev_click, turn)
                 if peg_name is not None:
-                    peg.set_desc("name", peg_name)
+                    peg.set_config("name", peg_name)
                 self.add_shape_xy(peg, i, j)
 
     def update(self, guess):
