@@ -155,12 +155,9 @@ class BoardGameApp(cdkk.PyGameApp):
         pygame.display.set_caption("Board Game")
         self.background_fill = "burlywood"
         self.add_sprite_mgr(Manager_Reversi(self.boundary))
-        key_map = {
-            pygame.K_q: "Quit",
-            pygame.K_p: "Print",
-            pygame.K_r: "StartGame",
-            pygame.K_h: "Hint"
-        }
+        key_map = cdkk.merge_dicts(cdkk.PyGameApp.default_key_map,
+                                   {pygame.K_p: "Print",
+                                    pygame.K_h: "Hint"})
         user_event_map = {
             cdkk.EVENT_GAME_TIMER_1: "ClearHint"
         }

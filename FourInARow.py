@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, "cdkk")
 import cdkk
 import pygame
 from BoardGames import *
@@ -149,11 +147,8 @@ class BoardGameApp(cdkk.PyGameApp):
     def init(self):
         super().init()
         self.add_sprite_mgr(Manager_mnkGame(self.boundary))
-        key_map = {
-            pygame.K_q: "Quit",
-            pygame.K_p: "Print",
-            pygame.K_r: "StartGame"
-        }
+        key_map = cdkk.merge_dicts(cdkk.PyGameApp.default_key_map,
+                                   {pygame.K_p: "Print"})
         self.event_mgr.event_map(key_event_map=key_map)
 
 # --------------------------------------------------

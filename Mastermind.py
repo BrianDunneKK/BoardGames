@@ -290,11 +290,7 @@ class BoardGameApp(cdkk.PyGameApp):
     def init(self):
         super().init()
         self.add_sprite_mgr(Manager_Mastermind(self.boundary))
-        key_map = {
-            pygame.K_q: "Quit",
-            pygame.K_s: "StartGame"
-        }
-        self.event_mgr.event_map(key_event_map=key_map)
+        self.event_mgr.event_map(key_event_map=cdkk.PyGameApp.default_key_map)
 
 # --------------------------------------------------
 
