@@ -49,7 +49,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
         Sprite_mnkGame_Piece.mnkGame_board = board
 
         self._mnk_game = BoardGame_mnkGame(MNK_COLS, MNK_ROWS, MNK_INAROW)
-        self._mnk_game.start_game()
+        self._mnk_game.start_board_game()
         self._current_piece = None
 
         self._next_player = cdkk.Sprite_DynamicText("Next", cdkk.cdkkRect(
@@ -73,7 +73,7 @@ class Manager_mnkGame(cdkk.SpriteManager):
     def start_game(self):
         super().start_game()
         self.kill_sprites_by_desc("class", "Sprite_mnkGame_Piece")
-        self._mnk_game.start_game()
+        self._mnk_game.start_board_game()
         for p in self._mnk_game.pieces:
             self.add_piece(p[0], p[1], p[2])
         self._next_piece = None

@@ -2,14 +2,18 @@ import cdkk
 import random
 
 class Board:
-    def __init__(self, xsize, ysize):
+    def __init__(self, xsize=None, ysize=None):
+        self.init_board(xsize, ysize)
+
+    def init_board(self, xsize=None, ysize=None):
         self._pieces = []
         self._size = (xsize, ysize)
-        for y in range(0,ysize):
-            row = []
-            for x in range(0,xsize):
-                row.append(".")
-            self._pieces.append(row)
+        if xsize is not None and ysize is not None:
+            for y in range(0,ysize):
+                row = []
+                for x in range(0,xsize):
+                    row.append(".")
+                self._pieces.append(row)
 
     @property
     def xsize(self):
@@ -18,9 +22,6 @@ class Board:
     @property
     def ysize(self):
         return self._size[1]
-
-    def start_game(self):
-        self.clear_board()
 
     def get_piece(self, x, y):
         return self._pieces[y][x]
@@ -44,6 +45,15 @@ class Board:
 
     def test_piece(self, x, y, value="."):
         return (self._pieces[y][x] == value)
+
+    def test_pieces(self, xy_list, value="."):
+        if value is None:
+            x, y = xy_list[0]
+            value = self.get_piece(x,y)
+        found = True
+        for xy in xy_list:
+            found = found and self.test_piece(xy[0], xy[1], value)
+        return found
 
     def find(self, filter):
         # Filter options: "*" = All pieces, "." = Blank cells, Anything else = Cell contents
@@ -78,7 +88,7 @@ class Board:
     def count_blanks(self):
         return self.count_pieces(".")
 
-    def to_str(self, rotate=False):
+    def board_to_str(self, rotate=False):
         board_str = ""
         ysize = len(self._pieces)
         xsize = len(self._pieces[0])
@@ -100,23 +110,29 @@ class Board:
             board_str += "+" + "-"*ysize*2 + "-+"
         return board_str
 
-    def print_board(self):
-        ysize = len(self._pieces)
-        xsize = len(self._pieces[0])
-        cdkk.logger.debug("+"+"-"*xsize*2+"-+")
-        for i in range(ysize):
-            str = "|"
-            for j in range(xsize):
-                str = str + " " + self._pieces[i][j]
-            str += " |"
-            cdkk.logger.debug(str)
-        cdkk.logger.debug("+"+"-"*xsize*2+"-+")
+    def print_board(self, as_debug=False):
+        if not as_debug:
+            print(self.board_to_str())
+        else:
+            ysize = len(self._pieces)
+            xsize = len(self._pieces[0])
+            cdkk.logger.debug("+"+"-"*xsize*2+"-+")
+            for i in range(ysize):
+                str = "|"
+                for j in range(xsize):
+                    str = str + " " + self._pieces[i][j]
+                str += " |"
+                cdkk.logger.debug(str)
+            cdkk.logger.debug("+"+"-"*xsize*2+"-+")
 
 ### --------------------------------------------------
 
 class BoardGame(Board):
-    def __init__(self, xsize, ysize, num_players=2):
-        super().__init__(xsize, ysize)
+    def __init__(self, xsize=None, ysize=None, num_players=2):
+        self.init_board_game(xsize, ysize, num_players)
+    
+    def init_board_game(self, xsize=None, ysize=None, num_players=2):
+        self.init_board(xsize, ysize)
         self._num_players = num_players
         self._current_player = 1
         self._game_over = False
@@ -146,7 +162,7 @@ class BoardGame(Board):
         return self._turn_num
 
     def next_player(self):
-        self._current_player = (self._current_player + 1) % self._num_players
+        self._current_player = (self._current_player % self._num_players) + 1
 
     def player_name(self, player_num):
         return self._player_names[player_num-1]
@@ -172,6 +188,24 @@ class BoardGame(Board):
     def current_player_name(self):
         return self.player_name(self._current_player)
 
+    @property
+    def winner_code(self):
+        if self._current_context["game over"] is None:
+            return None
+        elif self._current_context["game over"] == 0:
+            return "Draw"
+        else:
+            return self.player_code(self._current_context["game over"])
+
+    @property
+    def winner_name(self):
+        if self._current_context["game over"] is None:
+            return None
+        elif self._current_context["game over"] == 0:
+            return "Draw"
+        else:
+            return self.player_name(self._current_context["game over"])
+
     def set_player_names(self, player_names):
         num = min(self._num_players, len(player_names))
         for i in range(num):
@@ -182,8 +216,8 @@ class BoardGame(Board):
         for i in range(num):
             self._player_codes[i] = player_codes[i]
 
-    def start_game(self):
-        super().start_game()
+    def start_board_game(self):
+        self.clear_board()
         self._current_player = 1
         self._game_over = False
         self._turn_num = 0
@@ -192,7 +226,7 @@ class BoardGame(Board):
         return self.count_pieces(self.player_code(player_num))
 
     def valid_play(self, col, row):
-        return not self._game_over
+        return col >= 0 and col < self.xsize and row >= 0 and row < self.ysize and not self._game_over
 
     def calculate_play(self, col, row):
         return (col, row)
@@ -210,13 +244,17 @@ class BoardGame(Board):
         changes.append([c, r, self.get_piece(c, r), "add"])
         return changes
 
-    def game_over(self, player, col, row):
+    def game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
         return winner
 
     def play_piece(self, col=0, row=0, context=None):
+        if row is None:
+            row = col // self.xsize
+            col = col % self.xsize
         self._current_context = cdkk.merge_dicts(context, {"turn":self._turn_num, "changes":None})
+        
         c, r = (col, row)
         valid_move = self.valid_play(col, row)
         if valid_move:
@@ -225,12 +263,12 @@ class BoardGame(Board):
             consequences = self.execute_play(c,r)
             self.manage_consequences(c, r, consequences)
             self._current_context["changes"] = self.calculate_changes(c, r, consequences)
-            p = self.current_player_code
+            p = self.current_player
             self.next_player()
+            self._current_context["game over"] = self.game_over(p, c, r)
         else:
             p = None
-
-        self._current_context["game over"] = self.game_over(p, c, r)
+            self._current_context["game over"] = None
 
         return self._current_context
 
@@ -262,8 +300,8 @@ class BoardGame_Reversi(BoardGame):
         super().__init__(xsize, ysize)
         self.set_player_names(names)
 
-    def start_game(self):
-        super().start_game()
+    def start_board_game(self):
+        super().start_board_game()
         self._pieces[3][3] = self.player_code(2)
         self._pieces[3][4] = self.player_code(1)
         self._pieces[4][4] = self.player_code(2)
@@ -347,7 +385,7 @@ class BoardGame_Reversi(BoardGame):
             changes.append([c, r, self.get_piece(c, r), "flip"])
         return changes
 
-    def game_over(self, player, col, row):
+    def game_over(self, player_num, col, row):
         if ( self.count_blanks() == 0 ):
             p1 = self.count_player_pieces(1)
             p2 = self.count_player_pieces(2)
@@ -382,7 +420,7 @@ class BoardGame_mnkGame(BoardGame):
         else:
             return None
 
-    def game_over(self, player, col, row):
+    def game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
         if not self._game_over:
@@ -444,7 +482,7 @@ class BoardGame_Mastermind(BoardGame):
         else:
             self._code = list(new_code)
 
-    def to_str(self, rotate=False):
+    def board_to_str(self, rotate=False):
         # To Do: Rotate not supported
         board_str = ""
         ysize = len(self._pieces)
@@ -500,7 +538,7 @@ class BoardGame_Mastermind(BoardGame):
             self.set_piece(i, self.turn_num-1, guess_score[i])
         return None
 
-    def game_over(self, player, col, row):
+    def game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
 

@@ -8,7 +8,7 @@ class HangmanApp(cdkk.cdkkApp):
         super().init()
         self.all_words = []
         self.difficulty = 4  # Options: 1..4
-        filename = "Words-Grade{}.txt".format(self.difficulty)
+        filename = "BoardGames\\Words-Grade{}.txt".format(self.difficulty)
         with open(filename) as wordfile:
             for line in wordfile:
                 if len(line) > (self.difficulty+3):  # Reject short words (length includes new-line)
@@ -24,7 +24,7 @@ class HangmanApp(cdkk.cdkkApp):
         self.draw()
 
     def manage_events(self):
-        self.next_guess = cdkk.getch()
+        self.next_guess = cdkk.read_key()
 
     def update(self):
         self.guesses += self.next_guess

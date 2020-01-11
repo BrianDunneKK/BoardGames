@@ -239,7 +239,7 @@ class Manager_Mastermind(cdkk.SpriteManager):
     def start_game(self):
         self.clear_board()
         super().start_game()
-        self._mm_game.start_game()
+        self._mm_game.start_board_game()
         self.clear_guess()
         self._current_codes = None
         self.find_current_pegs()
@@ -276,7 +276,7 @@ class Manager_Mastermind(cdkk.SpriteManager):
                 if outcome["game over"] is None:
                     self.clear_guess()
                     self.find_current_pegs()
-                    print(self._mm_game.to_str()+"\n")
+                    print(self._mm_game.board_to_str()+"\n")
                     print(self._mm_game.code)
                 else:
                     cdkk.EventManager.post_game_control("GameOver")

@@ -30,7 +30,7 @@ class Manager_Reversi(cdkk.SpriteManager):
         self.add(board)
 
         self._reversi = BoardGame_Reversi(8, 8)
-        self._reversi.start_game()
+        self._reversi.start_board_game()
 
         label_style = {"fillcolour": None, "width": 200, "height": 35}
         self._black_score = cdkk.Sprite_DynamicText("Black", style=label_style)
@@ -88,7 +88,7 @@ class Manager_Reversi(cdkk.SpriteManager):
     def start_game(self):
         self.kill_sprites_by_desc("class", "Sprite_BoardGame_Piece")
         self.remove(self._winner)  # Hide Game Over
-        self._reversi.start_game()
+        self._reversi.start_board_game()
         for p in self._reversi.pieces:
             self.add_piece(p[0], p[1], p[2])
 
