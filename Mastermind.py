@@ -23,7 +23,7 @@ class Sprite_CodePeg(cdkk.Sprite_Shape):
         super().__init__("CodePeg", rect, style=cdkk.stylesheet.style("CodePeg"))
         self.setup_mouse_events(ev_click)
         self._code = None
-        self.set_config("turn", turn)
+        self.set_config("Turn", turn)
 
     def enable(self, enable=True):
         outline = "black" if enable else "gray50"
@@ -47,7 +47,7 @@ class Sprite_ScorePeg(cdkk.Sprite_Shape):
     def __init__(self, rect, turn=None):
         super().__init__("ScorePeg", rect, style=cdkk.stylesheet.style("ScorePeg"))
         self._score = None
-        self.set_config("turn", turn)
+        self.set_config("Turn", turn)
 
     @property
     def score(self):
@@ -212,7 +212,7 @@ class Manager_Mastermind(cdkk.SpriteManager):
         self._current_scores = None
 
         sprites = self.find_sprites_by_desc("name", "CodePeg",
-                                            "turn", self._mm_game.turn_num)
+                                            "Turn", self._mm_game.turn_num)
         if len(sprites) > 0:
             for grp in sprites[0].groups():
                 if isinstance(grp, Sprite_CodePeg_Set):
@@ -221,7 +221,7 @@ class Manager_Mastermind(cdkk.SpriteManager):
             self._current_codes.enable()
 
         sprites = self.find_sprites_by_desc("name", "ScorePeg",
-                                            "turn", self._mm_game.turn_num)
+                                            "Turn", self._mm_game.turn_num)
         if len(sprites) > 0:
             for grp in sprites[0].groups():
                 if isinstance(grp, Sprite_ScorePeg_Set):
@@ -239,13 +239,13 @@ class Manager_Mastermind(cdkk.SpriteManager):
     def start_game(self):
         self.clear_board()
         super().start_game()
-        self._mm_game.start_board_game()
+        self._mm_game.start_game()
         self.clear_guess()
         self._current_codes = None
         self.find_current_pegs()
 
     def end_game(self):
-        if self._mm_game.current_context["game over"] == "1":
+        if self._mm_game.game_get_context("WinnerNum") == "1":
             self._winner.text = "You won!"
         else:
             self._winner.text = "You lost!"
@@ -273,7 +273,7 @@ class Manager_Mastermind(cdkk.SpriteManager):
                 outcome = self._mm_game.play_piece(
                     context={"guess": self._current_guess})
                 self._current_scores.update(outcome["score"])
-                if outcome["game over"] is None:
+                if outcome["WinnerNum"] is None:
                     self.clear_guess()
                     self.find_current_pegs()
                     print(self._mm_game.board_to_str()+"\n")

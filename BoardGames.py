@@ -1,6 +1,7 @@
 import cdkk
 import random
 
+
 class Board:
     def __init__(self, xsize=None, ysize=None):
         self.init_board(xsize, ysize)
@@ -9,9 +10,9 @@ class Board:
         self._pieces = []
         self._size = (xsize, ysize)
         if xsize is not None and ysize is not None:
-            for y in range(0,ysize):
+            for y in range(0, ysize):
                 row = []
-                for x in range(0,xsize):
+                for x in range(0, xsize):
                     row.append(".")
                 self._pieces.append(row)
 
@@ -40,7 +41,7 @@ class Board:
 
     def clear_board(self):
         for y in range(0, len(self._pieces)):
-            for x in range(0,len(self._pieces[0])):
+            for x in range(0, len(self._pieces[0])):
                 self.clear_piece(x, y)
 
     def test_piece(self, x, y, value="."):
@@ -49,7 +50,7 @@ class Board:
     def test_pieces(self, xy_list, value="."):
         if value is None:
             x, y = xy_list[0]
-            value = self.get_piece(x,y)
+            value = self.get_piece(x, y)
         found = True
         for xy in xy_list:
             found = found and self.test_piece(xy[0], xy[1], value)
@@ -59,10 +60,10 @@ class Board:
         # Filter options: "*" = All pieces, "." = Blank cells, Anything else = Cell contents
         piece_list = []
         for y in range(0, len(self._pieces)):
-            for x in range(0,len(self._pieces[0])):
-                if filter[0] == "*" and self.is_piece(x,y):
+            for x in range(0, len(self._pieces[0])):
+                if filter[0] == "*" and self.is_piece(x, y):
                     piece_list.append([x, y, self.get_piece(x, y)])
-                elif filter[0] == "." and not self.is_piece(x,y):
+                elif filter[0] == "." and not self.is_piece(x, y):
                     piece_list.append([x, y, self.get_piece(x, y)])
                 elif filter == self.get_piece(x, y):
                     piece_list.append([x, y, self.get_piece(x, y)])
@@ -72,16 +73,16 @@ class Board:
     def pieces(self):
         piece_list = []
         for y in range(0, len(self._pieces)):
-            for x in range(0,len(self._pieces[0])):
-                if (self.is_piece(x,y)):
+            for x in range(0, len(self._pieces[0])):
+                if (self.is_piece(x, y)):
                     piece_list.append([x, y, self.get_piece(x, y)])
         return piece_list
 
     def count_pieces(self, value):
         count = 0
         for y in range(0, len(self._pieces)):
-            for x in range(0,len(self._pieces[0])):
-                if (self.get_piece(x,y) == value):
+            for x in range(0, len(self._pieces[0])):
+                if (self.get_piece(x, y) == value):
                     count += 1
         return count
 
@@ -110,10 +111,14 @@ class Board:
             board_str += "+" + "-"*ysize*2 + "-+"
         return board_str
 
-    def print_board(self, as_debug=False):
+    def print_board(self, prefix=None, suffix=None, as_debug=False):
         if not as_debug:
+            if prefix is not None: print(prefix)
             print(self.board_to_str())
+            if suffix is not None: print(suffix)
         else:
+            if prefix is not None:
+                cdkk.logger.debug(prefix)
             ysize = len(self._pieces)
             xsize = len(self._pieces[0])
             cdkk.logger.debug("+"+"-"*xsize*2+"-+")
@@ -124,26 +129,101 @@ class Board:
                 str += " |"
                 cdkk.logger.debug(str)
             cdkk.logger.debug("+"+"-"*xsize*2+"-+")
+            if suffix is not None:
+                cdkk.logger.debug(suffix)
 
-### --------------------------------------------------
+# --------------------------------------------------
 
-class BoardGame(Board):
-    def __init__(self, xsize=None, ysize=None, num_players=2):
-        self.init_board_game(xsize, ysize, num_players)
-    
-    def init_board_game(self, xsize=None, ysize=None, num_players=2):
-        self.init_board(xsize, ysize)
-        self._num_players = num_players
-        self._current_player = 1
+class GameManager:
+    def __init__(self, num_players=None):
+        super().__init__()
+        self.game_init_context()
         self._game_over = False
-        self._player_codes = [str(x+1) for x in range(num_players)]
-        self._player_names = ["Player {0}".format(x+1) for x in range(num_players)]
-        self._current_context = None
         self._turn_num = 0
 
     @property
-    def in_progress(self):
+    def game_over(self):
+        return self._game_over
+
+    @property
+    def game_in_progress(self):
         return not self._game_over
+
+    def set_game_over(self, game_is_over=None):
+        if game_is_over is not None:
+            self._game_over = game_is_over
+
+    @property
+    def turn_num(self):
+        return self._turn_num
+
+    def next_turn(self):
+        self._turn_num = self._turn_num + 1
+        self.game_set_context("Turn", self.turn_num)
+        return self.turn_num
+
+    @property
+    def game_full_context(self):
+        return self._game_context
+
+    def game_init_context(self, new_context=None):
+        if new_context is None:
+            self._game_context = {}
+        else:
+            self._game_context = new_context
+
+    def game_get_context(self, attribute, default=None):
+        if self._game_context is None:
+            return default
+        if attribute in self._game_context:
+            return self._game_context[attribute]
+        else:
+            return default
+
+    def game_set_context(self, attribute, value):
+        self._game_context[attribute] = value
+        return value
+
+    def init_game(self):
+        self.game_set_context("Turn", 0)
+
+    def start_game(self):
+        self.set_game_over(False)
+        self._turn_num = 0
+
+    def draw_game(self):
+        pass
+
+    def end_game(self):
+        pass
+
+    def process_input(self, input):
+        dealt_with = False
+        return dealt_with
+
+# --------------------------------------------------
+
+class GameManagerMP(GameManager):  # Multi-Player Game
+    def __init__(self, num_players=None):
+        super().__init__()
+        self.mpg_current_player = 0  # Player = 1, 2, ...
+        self._num_players = 0
+        self.mpg_player_codes = self.mpg_player_names = None
+        self.init_game(num_players)
+
+    def init_game(self, num_players=None):
+        super().init_game()
+        if num_players is not None:
+            self._num_players = num_players
+            self.mpg_current_player = 1
+            self.mpg_player_codes = [str(x+1) for x in range(num_players)]
+            self.mpg_player_names = ["Player {0}".format(
+                x+1) for x in range(num_players)]
+            self.game_set_context("WinnerNum", None)
+
+    def start_game(self):
+        super().start_game()
+        self.current_player = 1
 
     @property
     def num_players(self):
@@ -151,82 +231,92 @@ class BoardGame(Board):
 
     @property
     def current_player(self):
-        return self._current_player
+        return self.mpg_current_player
 
-    @property
-    def current_context(self):
-        return self._current_context
-
-    @property
-    def turn_num(self):
-        return self._turn_num
-
-    def next_player(self):
-        self._current_player = (self._current_player % self._num_players) + 1
+    @current_player.setter
+    def current_player(self, new_current_player):
+        if new_current_player > 0 and new_current_player <= self.num_players:
+            self.mpg_current_player = new_current_player
+            self.game_set_context("CurrentPlayer", self.current_player)
 
     def player_name(self, player_num):
-        return self._player_names[player_num-1]
+        return self.mpg_player_names[player_num-1]
 
     def player_code(self, player_num):
-        return self._player_codes[player_num-1]
+        return self.mpg_player_codes[player_num-1]
+
+    def next_player(self):
+        self.current_player = (self.current_player % self.num_players) + 1
+
+    @property
+    def current_player_code(self):
+        return self.player_code(self.current_player)
+
+    @property
+    def current_player_name(self):
+        return self.player_name(self.current_player)
+
+    @property
+    def winner_code(self):
+        if self.game_get_context("WinnerNum") is None:
+            return None
+        elif self.game_get_context("WinnerNum") == 0:
+            return "Draw"
+        else:
+            return self.player_code(self.game_get_context("WinnerNum"))
+
+    @property
+    def winner_name(self):
+        if self.game_get_context("WinnerNum") is None:
+            return None
+        elif self.game_get_context("WinnerNum") == 0:
+            return "Draw"
+        else:
+            return self.player_name(self.game_get_context("WinnerNum"))
+
+    def set_player_names(self, player_names):
+        num = min(self.num_players, len(player_names))
+        for i in range(num):
+            self.mpg_player_names[i] = player_names[i]
+
+    def set_player_codes(self, player_codes):
+        num = min(self.num_players, len(player_codes))
+        for i in range(num):
+            self.mpg_player_codes[i] = player_codes[i]
 
     def player_by_code(self, player_code):
         player_num = 0
         i = 1
-        for p in self._player_codes:
+        for p in self.mpg_player_codes:
             if p == player_code and player_num == 0:
-                player_num = i    
+                player_num = i
             else:
                 i += 1
         return player_num
 
-    @property
-    def current_player_code(self):
-        return self.player_code(self._current_player)
+# --------------------------------------------------
 
-    @property
-    def current_player_name(self):
-        return self.player_name(self._current_player)
 
-    @property
-    def winner_code(self):
-        if self._current_context["game over"] is None:
-            return None
-        elif self._current_context["game over"] == 0:
-            return "Draw"
-        else:
-            return self.player_code(self._current_context["game over"])
+class BoardGame(GameManagerMP, Board):
+    def __init__(self, xsize=None, ysize=None, num_players=2):
+        super().__init__()
+        self.init_board(xsize, ysize)
+        self.init_game(num_players)
 
-    @property
-    def winner_name(self):
-        if self._current_context["game over"] is None:
-            return None
-        elif self._current_context["game over"] == 0:
-            return "Draw"
-        else:
-            return self.player_name(self._current_context["game over"])
-
-    def set_player_names(self, player_names):
-        num = min(self._num_players, len(player_names))
-        for i in range(num):
-            self._player_names[i] = player_names[i]
-
-    def set_player_codes(self, player_codes):
-        num = min(self._num_players, len(player_codes))
-        for i in range(num):
-            self._player_codes[i] = player_codes[i]
-
-    def start_board_game(self):
+    def start_game(self):
         self.clear_board()
-        self._current_player = 1
-        self._game_over = False
-        self._turn_num = 0
+        super().start_game()
 
     def count_player_pieces(self, player_num):
         return self.count_pieces(self.player_code(player_num))
 
-    def valid_play(self, col, row):
-        return col >= 0 and col < self.xsize and row >= 0 and row < self.ysize and not self._game_over
+    def valid_play(self, col, row, check_if_blank=True):
+        move_is_valid = self.game_in_progress and col >= 0 and col < self.xsize and row >= 0 and row < self.ysize
+        
+        if check_if_blank:
+            move_is_valid = move_is_valid and self.is_blank(col, row)
+            
+        return move_is_valid
 
     def calculate_play(self, col, row):
         return (col, row)
@@ -244,7 +334,7 @@ class BoardGame(Board):
         changes.append([c, r, self.get_piece(c, r), "add"])
         return changes
 
-    def game_over(self, player_num, col, row):
+    def check_game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
         return winner
@@ -253,26 +343,31 @@ class BoardGame(Board):
         if row is None:
             row = col // self.xsize
             col = col % self.xsize
-        self._current_context = cdkk.merge_dicts(context, {"turn":self._turn_num, "changes":None})
-        
+        self.game_init_context(context)
+        self.game_set_context("changes", None)
+
         c, r = (col, row)
         valid_move = self.valid_play(col, row)
         if valid_move:
-            self._turn_num += 1
+            self.next_turn()
             c, r = self.calculate_play(col, row)
-            consequences = self.execute_play(c,r)
+            consequences = self.execute_play(c, r)
             self.manage_consequences(c, r, consequences)
-            self._current_context["changes"] = self.calculate_changes(c, r, consequences)
+            self.game_set_context("changes",
+                                    self.calculate_changes(c, r, consequences))
             p = self.current_player
             self.next_player()
-            self._current_context["game over"] = self.game_over(p, c, r)
+            winner_num = self.game_set_context("WinnerNum", self.check_game_over(p, c, r))
         else:
             p = None
-            self._current_context["game over"] = None
+            winner_num = self.game_set_context("WinnerNum", None)
 
-        return self._current_context
+        self.set_game_over(winner_num is not None)
 
-### --------------------------------------------------
+        return self.game_full_context
+
+# --------------------------------------------------
+
 
 class Direction:
     def __init__(self, name, xstep, ystep, value):
@@ -281,27 +376,29 @@ class Direction:
         self.ystep = ystep
         self.value = value
 
+
 class Directions:
-    n  = Direction("N",  0, -1, 1)
+    n = Direction("N",  0, -1, 1)
     ne = Direction("NE", 1, -1, 2)
-    e  = Direction("E",  1,  0, 4)
+    e = Direction("E",  1,  0, 4)
     se = Direction("SE", 1,  1, 8)
-    s  = Direction("S",  0,  1, 16)
-    sw = Direction("SW",-1,  1, 32)
-    w  = Direction("W", -1,  0, 64)
-    nw = Direction("NW",-1, -1, 128)
+    s = Direction("S",  0,  1, 16)
+    sw = Direction("SW", -1,  1, 32)
+    w = Direction("W", -1,  0, 64)
+    nw = Direction("NW", -1, -1, 128)
 
-    all_dirs =  [n, ne, e, se, s, sw, w, nw]
+    all_dirs = [n, ne, e, se, s, sw, w, nw]
 
-### --------------------------------------------------
+# --------------------------------------------------
+
 
 class BoardGame_Reversi(BoardGame):
     def __init__(self, xsize, ysize, names=["Black", "White"]):
         super().__init__(xsize, ysize)
         self.set_player_names(names)
 
-    def start_board_game(self):
-        super().start_board_game()
+    def start_game(self):
+        super().start_game()
         self._pieces[3][3] = self.player_code(2)
         self._pieces[3][4] = self.player_code(1)
         self._pieces[4][4] = self.player_code(2)
@@ -314,7 +411,7 @@ class BoardGame_Reversi(BoardGame):
             self._pieces[y][x] = self.player_code(1)
 
     def flip_pieces(self, flip_list):
-        for x,y in flip_list:
+        for x, y in flip_list:
             self.flip_piece(x, y)
 
     def check_move(self, col, row):
@@ -343,13 +440,13 @@ class BoardGame_Reversi(BoardGame):
         while valid and not found_second:
             col += dir.xstep
             row += dir.ystep
-            if (col<0 or col>=8 or row<0 or row>=8):
+            if (col < 0 or col >= 8 or row < 0 or row >= 8):
                 valid = False
             else:
                 p = self.get_piece(col, row)
                 if p == first:
                     count_first += 1
-                    flip_list.append((col,row))
+                    flip_list.append((col, row))
                 elif p == second:
                     found_second = True
                 else:
@@ -357,7 +454,7 @@ class BoardGame_Reversi(BoardGame):
         if (not found_second) or (not valid):
             flip_list.clear()
         return flip_list
-        
+
     def next_moves(self):
         moves = []
         for p in self.find("."):
@@ -381,12 +478,12 @@ class BoardGame_Reversi(BoardGame):
     def calculate_changes(self, c, r, consequences):
         changes = []
         changes.append([c, r, self.get_piece(c, r), "add"])
-        for c,r in consequences:
+        for c, r in consequences:
             changes.append([c, r, self.get_piece(c, r), "flip"])
         return changes
 
-    def game_over(self, player_num, col, row):
-        if ( self.count_blanks() == 0 ):
+    def check_game_over(self, player_num, col, row):
+        if (self.count_blanks() == 0):
             p1 = self.count_player_pieces(1)
             p2 = self.count_player_pieces(2)
             if p1 > p2:
@@ -396,7 +493,8 @@ class BoardGame_Reversi(BoardGame):
             else:
                 return 0
 
-### --------------------------------------------------
+# --------------------------------------------------
+
 
 class BoardGame_mnkGame(BoardGame):
     def __init__(self, xsize, ysize, inarow, names=["Red", "Yellow"]):
@@ -405,7 +503,7 @@ class BoardGame_mnkGame(BoardGame):
         self.set_player_names(names)
 
     def valid_play(self, col, row):
-        return ( not self._game_over) and self.is_blank(col, 0)
+        return self.game_in_progress and self.is_blank(col, 0)
 
     def calculate_play(self, col, row):
         # Piece drops to lowest available position
@@ -420,16 +518,16 @@ class BoardGame_mnkGame(BoardGame):
         else:
             return None
 
-    def game_over(self, player_num, col, row):
+    def check_game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
-        if not self._game_over:
+        if self.game_in_progress:
             for y in range(0, len(self._pieces)):
-                for x in range(0,len(self._pieces[0])):
+                for x in range(0, len(self._pieces[0])):
                     for dir in Directions.all_dirs:
                         if winner is None:
                             winner = self.game_over_dir(x, y, dir)
-            self._game_over = winner is not None
+            self.set_game_over(winner is not None)
         return winner
 
     def game_over_dir(self, col, row, dir):
@@ -444,7 +542,7 @@ class BoardGame_mnkGame(BoardGame):
                 if c < 0 or r < 0 or c >= self.xsize or r >= self.ysize:
                     still_checking = False
                 if still_checking:
-                    still_checking = ( self.get_piece(c, r) == player )
+                    still_checking = (self.get_piece(c, r) == player)
 
         if still_checking:
             winner = self.player_by_code(player)
@@ -476,7 +574,7 @@ class BoardGame_Mastermind(BoardGame):
             if self._allow_repeats:
                 self._code = []
                 for i in range(self._holes):
-                    self._code.append(random.randint(0,self._options-1))
+                    self._code.append(random.randint(0, self._options-1))
             else:
                 self._code = random.sample(range(self._options), self._holes)
         else:
@@ -499,13 +597,17 @@ class BoardGame_Mastermind(BoardGame):
             board_str += "+" + "-"*(xsize*2+1) + "-+"
         return board_str
 
+    def valid_play(self, col, row, check_if_blank=False):
+        return super().valid_play(col, row, check_if_blank)
+
     def calculate_play(self, col, row):
-        self._current_context["score"] = self.calculate_score(self.current_context["guess"], self._code)
+        self.game_set_context("score",
+                                self.calculate_score(self.game_get_context("guess"), self._code))
         return (col, row)
 
     def calculate_score(self, guess, code):
         score = ""
-        
+
         # Copy lists before changing
         code2 = code.copy()
         guess2 = guess.copy()
@@ -532,22 +634,22 @@ class BoardGame_Mastermind(BoardGame):
         return score
 
     def execute_play(self, col, row):
-        guess = "".join(str(n) for n in self.current_context["guess"])
-        guess_score = guess + self.current_context["score"]
+        guess = "".join(str(n) for n in self.game_get_context("guess"))
+        guess_score = guess + self.game_get_context("score")
         for i in range(self._holes*2):
             self.set_piece(i, self.turn_num-1, guess_score[i])
         return None
 
-    def game_over(self, player_num, col, row):
+    def check_game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
 
-        if self._current_context["score"] == "1111":
-            winner = "1" # Code breaker
+        if self.game_get_context("score") == "1111":
+            winner = "1"  # Code breaker
         elif self.turn_num == self._guesses:
-            winner = "2" # Code maker
+            winner = "2"  # Code maker
 
-        self._game_over = (winner is not None)
+        self.set_game_over(winner is not None)
 
         return winner
 

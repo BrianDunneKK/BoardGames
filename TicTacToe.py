@@ -1,16 +1,14 @@
 import cdkk
 from BoardGames import *
 
+# --------------------------------------------------
 
 class BoardGame_TicTacToe(BoardGame):
-    def init_board_game(self, xsize=3, ysize=3, num_players=2):
-        super().init_board_game(xsize, ysize, num_players)
+    def __init__(self):
+        super().__init__(xsize=3, ysize=3, num_players=2)
         self.set_player_codes(["X", "O"])
 
-    def valid_play(self, col, row):
-        return super().valid_play(col, row) and self.is_blank(col, row)
-
-    def game_over(self, player_num, col, row):
+    def check_game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
         curr_player = self.player_code(player_num)
@@ -23,44 +21,34 @@ class BoardGame_TicTacToe(BoardGame):
                 if self.test_pieces(win, curr_player) and winner is None:
                     winner = player_num
 
-            if winner is None and len(self.find(".")) == 0:
+            if winner is None and len(self.find(".")) == 0:  # Check for draw
                 winner = 0
         return winner
 
-# --------------------------------------------------
-
-
-class TicTacToeApp(cdkk.cdkkApp, BoardGame_TicTacToe):
-    def init(self):
-        super().init()
-        self.init_board_game()
-
-    def start_game(self):
-        super().start_game()
-        self.start_board_game()
-        self.draw()
-
-    def manage_events(self):
-        print("Turn: "+self.current_player_code)
-        self.next_move = cdkk.read_key(digit_only=True, match_pattern="[0-8]")
-
-    def update(self):
-        self._outcome = self.play_piece(self.next_move, row=None)
-
-    def manage_loop(self):
-        if self._outcome["game over"] is not None:
-            self.end_game()
-
-    def draw(self, flip=True):
-        print("\n")
-        self.print_board()
+    def draw_game(self):
+        self.print_board(prefix="",
+                         suffix="Turn: "+self.current_player_code if self.game_in_progress else None)
 
     def end_game(self):
         print("\nWinner = " + self.winner_name + "\n")
-        self.exit_app()
+        super().end_game()
+
+    def process_input(self, input):
+        self.play_piece(input, row=None)
+        return True
 
 # --------------------------------------------------
 
+class TicTacToeApp(cdkk.cdkkApp):
+    def __init__(self):
+        app_config = {
+            "exit_at_end": True,
+            "read_key_and_process": {"digit_only": True, "match_pattern": "[0-8]"}
+        }
+        super().__init__(app_config)
+        self.add_game_mgr(BoardGame_TicTacToe())
+
+# --------------------------------------------------
 
 ttt = TicTacToeApp()
 ttt.execute()
