@@ -25,7 +25,10 @@ class Board:
         return self._size[1]
 
     def get_piece(self, x, y):
-        return self._pieces[y][x]
+        if len(self._pieces) > 0:
+            return self._pieces[y][x]
+        else:
+            return None
 
     def is_piece(self, x, y):
         return (self._pieces[y][x] != ".")
@@ -207,18 +210,16 @@ class GameManagerMP(GameManager):  # Multi-Player Game
     def __init__(self, num_players=None):
         super().__init__()
         self.mpg_current_player = 0  # Player = 1, 2, ...
-        self._num_players = 0
+        self.num_players = num_players
         self.mpg_player_codes = self.mpg_player_names = None
-        self.init_game(num_players)
 
-    def init_game(self, num_players=None):
+    def init_game(self):
         super().init_game()
-        if num_players is not None:
-            self._num_players = num_players
+        if self.num_players is not None:
             self.mpg_current_player = 1
-            self.mpg_player_codes = [str(x+1) for x in range(num_players)]
+            self.mpg_player_codes = [str(x+1) for x in range(self.num_players)]
             self.mpg_player_names = ["Player {0}".format(
-                x+1) for x in range(num_players)]
+                x+1) for x in range(self.num_players)]
             self.game_set_context("WinnerNum", None)
 
     def start_game(self):
@@ -228,6 +229,10 @@ class GameManagerMP(GameManager):  # Multi-Player Game
     @property
     def num_players(self):
         return self._num_players
+
+    @num_players.setter
+    def num_players(self, new_num_players):
+        self._num_players = new_num_players
 
     @property
     def current_player(self):
@@ -257,22 +262,24 @@ class GameManagerMP(GameManager):  # Multi-Player Game
         return self.player_name(self.current_player)
 
     @property
+    def winner_num(self):
+        return self.game_get_context("WinnerNum")
+
+    @property
     def winner_code(self):
-        if self.game_get_context("WinnerNum") is None:
+        if self.winner_num is None:
             return None
-        elif self.game_get_context("WinnerNum") == 0:
+        elif self.winner_num == 0:
             return "Draw"
         else:
-            return self.player_code(self.game_get_context("WinnerNum"))
+            return self.player_code(self.winner_num)
 
     @property
     def winner_name(self):
-        if self.game_get_context("WinnerNum") is None:
-            return None
-        elif self.game_get_context("WinnerNum") == 0:
-            return "Draw"
+        if self.winner_num is None or self.winner_num == 0:
+            return self.winner_code
         else:
-            return self.player_name(self.game_get_context("WinnerNum"))
+            return self.player_name(self.winner_num)
 
     def set_player_names(self, player_names):
         num = min(self.num_players, len(player_names))
@@ -301,7 +308,7 @@ class BoardGame(GameManagerMP, Board):
     def __init__(self, xsize=None, ysize=None, num_players=2):
         super().__init__()
         self.init_board(xsize, ysize)
-        self.init_game(num_players)
+        self.num_players = num_players
 
     def start_game(self):
         self.clear_board()
@@ -310,11 +317,14 @@ class BoardGame(GameManagerMP, Board):
     def count_player_pieces(self, player_num):
         return self.count_pieces(self.player_code(player_num))
 
-    def valid_play(self, col, row, check_if_blank=True):
-        move_is_valid = self.game_in_progress and col >= 0 and col < self.xsize and row >= 0 and row < self.ysize
-        
-        if check_if_blank:
-            move_is_valid = move_is_valid and self.is_blank(col, row)
+    def valid_play(self, col=None, row=None, check_if_blank=True):
+        if col is None or row is None:
+            move_is_valid = True
+        else:
+            move_is_valid = self.game_in_progress and col >= 0 and col < self.xsize and row >= 0 and row < self.ysize
+            
+            if check_if_blank:
+                move_is_valid = move_is_valid and self.is_blank(col, row)
             
         return move_is_valid
 

@@ -1,11 +1,11 @@
-import random
 import cdkk
+from BoardGames import *
 from hangman_txt import *
 
 
-class HangmanApp(cdkk.cdkkApp):
-    def init(self):
-        super().init()
+class BoardGame_Hangman(BoardGame):
+    def init_game(self):
+        super().init_game()
         self.all_words = []
         self.difficulty = 4  # Options: 1..4
         filename = "BoardGames\\Words-Grade{}.txt".format(self.difficulty)
@@ -18,40 +18,57 @@ class HangmanApp(cdkk.cdkkApp):
         super().start_game()
         self.mistakes = 0
         self.word = random.choice(self.all_words).upper()
-        self.word_list = list(self.word)
-        self.word_guess = ["."] * len(self.word)
+        self.word_guess = "." * len(self.word)
         self.guesses = ""
-        self.draw()
 
-    def manage_events(self):
-        self.next_guess = cdkk.read_key()
+    def process_input(self, input):
+        self.play_piece(context={"guess": input})
+        return True
 
-    def update(self):
-        self.guesses += self.next_guess
-        found = False
+    def valid_play(self, *args):
+        return self.game_get_context("guess") not in self.guesses
+
+    def check_game_over(self, *args):
+        if self.word == self.word_guess:
+            return 1
+        elif self.mistakes == (len(hangman_txt)-1):
+            return 2
+        else:
+            return None
+
+    def execute_play(self, *args):
+        guess = self.game_get_context("guess")
+        self.guesses += guess
+        not_found = 1
         for i in range(len(self.word)):
-            if self.next_guess == self.word_list[i]:
-                self.word_guess[i] = self.next_guess
-                found = True
-        if not found:
-            self.mistakes += 1
+            if guess == self.word[i]:
+                self.word_guess = self.word_guess[:i] + guess + self.word_guess[i+1:]
+                not_found = 0
+        self.mistakes += not_found
+        return True
 
-    def draw(self, flip=True):
+    def draw_game(self):
         print("\n"+hangman_txt[self.mistakes])
-        print("    "+"".join(self.word_guess)+"    (Guesses:"+self.guesses+")")
-
-    def manage_loop(self):
-        if self.word_list == self.word_guess:
-            print("\nYou won!\n")
-            self.end_game()
-        elif (self.mistakes+1) == len(hangman_txt):
-            print("\nYou lost! The word was " + self.word + ".\n")
-            self.end_game()
+        print("    " + self.word_guess + "    (Guesses: " + self.guesses + ")")
 
     def end_game(self):
-        self.exit_app()
+        if self.winner_num == 1:
+            print("\nYou won!\n")
+        else:
+            print("\nYou lost! The word was " + self.word + ".\n")
+        super().end_game()
+
 
 # --------------------------------------------------
 
+
+class HangmanApp(cdkk.cdkkApp):
+    def __init__(self):
+        app_config = {
+            "exit_at_end": True,
+            "read_key_and_process": {"match_pattern": "[a-zA-Z]", "as_upper": True}
+        }
+        super().__init__(app_config)
+        self.add_game_mgr(BoardGame_Hangman())
 
 HangmanApp().execute()

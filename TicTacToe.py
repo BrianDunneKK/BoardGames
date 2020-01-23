@@ -6,7 +6,14 @@ from BoardGames import *
 class BoardGame_TicTacToe(BoardGame):
     def __init__(self):
         super().__init__(xsize=3, ysize=3, num_players=2)
+
+    def init_game(self):
+        super().init_game()
         self.set_player_codes(["X", "O"])
+
+    def process_input(self, input):
+        self.play_piece(input, row=None)
+        return True
 
     def check_game_over(self, player_num, col, row):
         # Return: Winner's number; 0 = Draw; None = No winner
@@ -30,12 +37,8 @@ class BoardGame_TicTacToe(BoardGame):
                          suffix="Turn: "+self.current_player_code if self.game_in_progress else None)
 
     def end_game(self):
-        print("\nWinner = " + self.winner_name + "\n")
+        print("\nWinner = " + self.winner_code + "\n")
         super().end_game()
-
-    def process_input(self, input):
-        self.play_piece(input, row=None)
-        return True
 
 # --------------------------------------------------
 
@@ -43,12 +46,9 @@ class TicTacToeApp(cdkk.cdkkApp):
     def __init__(self):
         app_config = {
             "exit_at_end": True,
-            "read_key_and_process": {"digit_only": True, "match_pattern": "[0-8]"}
+            "read_key_and_process": {"as_int": True, "match_pattern": "[0-8]"}
         }
         super().__init__(app_config)
         self.add_game_mgr(BoardGame_TicTacToe())
 
-# --------------------------------------------------
-
-ttt = TicTacToeApp()
-ttt.execute()
+TicTacToeApp().execute()
