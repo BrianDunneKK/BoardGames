@@ -1,6 +1,8 @@
+# To Do: Separate board_to_str()required for Mastermind?
+
 import cdkk
 import random
-
+import string
 
 class Board:
     def __init__(self, xsize=None, ysize=None):
@@ -92,46 +94,59 @@ class Board:
     def count_blanks(self):
         return self.count_pieces(".")
 
-    def board_to_str(self, rotate=False):
+    def board_to_str(self, inc_labels=False, rotate=False):
         board_str = ""
         ysize = len(self._pieces)
         xsize = len(self._pieces[0])
+
         if not rotate:
-            board_str = "+" + "-"*xsize*2 + "-+\n"
+            cols = string.ascii_uppercase[:xsize]
+            rows = string.hexdigits[:ysize]
+        else:
+            cols = string.hexdigits[:ysize]
+            rows = string.ascii_uppercase[:xsize]
+        cols = list(cols)
+        rows = list(rows)
+        if inc_labels:
+            board_str += "    " + " ".join(cols) + "\n"
+            board_str += "  "
+        if not rotate:
+            board_str += "+" + "-"*xsize*2 + "-+\n"
             for i in range(ysize):
+                if inc_labels:
+                    board_str += rows[i] + " "
                 board_str += "|"
                 for j in range(xsize):
                     board_str += " " + self._pieces[i][j]
                 board_str += " |\n"
+            if inc_labels:
+                board_str += "  "
             board_str += "+" + "-"*xsize*2 + "-+"
         else:
-            board_str = "+" + "-"*ysize*2 + "-+\n"
+            board_str += "+" + "-"*ysize*2 + "-+\n"
             for i in range(xsize):
+                if inc_labels:
+                    board_str += rows[i] + " "
                 board_str += "|"
                 for j in range(ysize):
                     board_str += " " + self._pieces[j][i]
                 board_str += " |\n"
+            if inc_labels:
+                board_str += "  "
             board_str += "+" + "-"*ysize*2 + "-+"
         return board_str
 
-    def print_board(self, prefix=None, suffix=None, as_debug=False):
+    def print_board(self, prefix=None, suffix=None, inc_labels=False, rotate=False, as_debug=False):
+        board_str = self.board_to_str(inc_labels=inc_labels, rotate=rotate)
         if not as_debug:
             if prefix is not None: print(prefix)
-            print(self.board_to_str())
+            print(board_str)
             if suffix is not None: print(suffix)
         else:
             if prefix is not None:
                 cdkk.logger.debug(prefix)
-            ysize = len(self._pieces)
-            xsize = len(self._pieces[0])
-            cdkk.logger.debug("+"+"-"*xsize*2+"-+")
-            for i in range(ysize):
-                str = "|"
-                for j in range(xsize):
-                    str = str + " " + self._pieces[i][j]
-                str += " |"
+            for str in board_str.split("\n"):
                 cdkk.logger.debug(str)
-            cdkk.logger.debug("+"+"-"*xsize*2+"-+")
             if suffix is not None:
                 cdkk.logger.debug(suffix)
 
@@ -590,7 +605,7 @@ class BoardGame_Mastermind(BoardGame):
         else:
             self._code = list(new_code)
 
-    def board_to_str(self, rotate=False):
+    def board_to_str(self, inc_labels=False, rotate=False):
         # To Do: Rotate not supported
         board_str = ""
         ysize = len(self._pieces)
