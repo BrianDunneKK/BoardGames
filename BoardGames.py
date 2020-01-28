@@ -1,4 +1,4 @@
-# To Do: Separate board_to_str()required for Mastermind?
+# To Do: Separate board_to_str() required for Mastermind?
 
 import cdkk
 import random
@@ -26,8 +26,31 @@ class Board:
     def ysize(self):
         return self._size[1]
 
+    def valid_cell(self, x, y):
+        return x>=0 and y>=0 and x<self.xsize and y<self.ysize
+
+    def calc_xcols_yrows(self, xcols, yrows, num, horiz):
+        if num is not None and horiz is not None:
+            if horiz:
+                xcols = num
+                yrows = 1
+            else:
+                xcols = 1
+                yrows = num
+
+        if xcols is None or xcols < 1:
+            xcols = 1
+        elif xcols >= self.xsize:
+            xcols = self.xsize - 1
+        if yrows is None or yrows < 1:
+            yrows = 1
+        elif yrows >= self.ysize:
+            yrows = self.ysize - 1
+
+        return (xcols, yrows)
+
     def get_piece(self, x, y):
-        if len(self._pieces) > 0:
+        if self.valid_cell(x,y):
             return self._pieces[y][x]
         else:
             return None
@@ -35,22 +58,27 @@ class Board:
     def is_piece(self, x, y):
         return (self._pieces[y][x] != ".")
 
-    def is_blank(self, x, y):
-        return (self._pieces[y][x] == ".")
+    def is_code_single(self, x, y, code):
+        if self.valid_cell(x,y):
+            return (self._pieces[y][x] == code)
+        else:
+            return None
 
-    def set_piece(self, x, y, code):
-        self._pieces[y][x] = code
+    def is_blank_single(self, x, y):
+        return self.is_code_single(x, y, ".")
 
-    def clear_piece(self, x, y):
-        self._pieces[y][x] = "."
+    def is_code(self, x, y, code, xcols=1, yrows=1, num=None, horiz=None):
+        xcols, yrows = self.calc_xcols_yrows(xcols, yrows, num, horiz)
 
-    def clear_board(self):
-        for y in range(0, len(self._pieces)):
-            for x in range(0, len(self._pieces[0])):
-                self.clear_piece(x, y)
+        all_code = True
+        for i in range(xcols):
+            for j in range(yrows):
+                all_code = all_code and self.is_code_single(x+i, y+j, code)
 
-    def test_piece(self, x, y, value="."):
-        return (self._pieces[y][x] == value)
+        return all_code
+
+    def is_blank(self, x, y, xcols=1, yrows=1, num=None, horiz=None):
+        return self.is_code(x, y, ".", xcols, yrows, num, horiz)
 
     def test_pieces(self, xy_list, value="."):
         if value is None:
@@ -58,14 +86,33 @@ class Board:
             value = self.get_piece(x, y)
         found = True
         for xy in xy_list:
-            found = found and self.test_piece(xy[0], xy[1], value)
+            found = found and self.is_code_single(xy[0], xy[1], value)
         return found
+
+    def set_piece_single(self, x, y, code):
+        if self.valid_cell(x,y):
+            self._pieces[y][x] = code
+            return code
+        else:
+            return None
+
+    def set_piece(self, x, y, code, xcols=1, yrows=1, num=None, horiz=None):
+        xcols, yrows = self.calc_xcols_yrows(xcols, yrows, num, horiz)
+        for i in range(xcols):
+            for j in range(yrows):
+                self.set_piece_single(x+i, y+j, code)
+
+    def clear_piece(self, x, y):
+        return self.set_piece_single(x, y, ".")
+
+    def clear_board(self):
+        self.set_piece(0, 0, ".", self.xsize, self.ysize)
 
     def find(self, filter):
         # Filter options: "*" = All pieces, "." = Blank cells, Anything else = Cell contents
         piece_list = []
-        for y in range(0, len(self._pieces)):
-            for x in range(0, len(self._pieces[0])):
+        for y in range(0, self.ysize):
+            for x in range(0, self.xsize):
                 if filter[0] == "*" and self.is_piece(x, y):
                     piece_list.append([x, y, self.get_piece(x, y)])
                 elif filter[0] == "." and not self.is_piece(x, y):
@@ -74,19 +121,52 @@ class Board:
                     piece_list.append([x, y, self.get_piece(x, y)])
         return piece_list
 
+    def find_random_single(self, code="."):
+        piece_list = self.find(code)
+        return random.choice(piece_list)
+
+    def find_random(self, code=".", xcols=1, yrows=1, num=None, horiz=None):
+        if num is not None and horiz is None:
+            horiz = random.choice([True, False])
+        xcols, yrows = self.calc_xcols_yrows(xcols, yrows, num, horiz)
+
+        attempts = 0
+        found = False
+        while not found and attempts<1000:
+            random_cell = self.find_random_single(code)
+            found = self.is_code(random_cell[0], random_cell[1], code, xcols, yrows)
+            attempts += 1
+        if found:
+            return (random_cell[0], random_cell[1], xcols, yrows)
+        else:
+            return None
+
+    def set_random(self, code, xcols=1, yrows=1, num=None, horiz=None):
+        cell = self.find_random(".", xcols, yrows, num, horiz)
+        if cell is not None:
+            self.set_piece(cell[0], cell[1], code, xcols=cell[2], yrows=cell[3])
+        ret_dict = {
+            "xpos": cell[0],
+            "ypos": cell[1],
+            "xcols": cell[2],
+            "yrows": cell[3],
+            "code": code
+        }
+        return ret_dict
+
     @property
     def pieces(self):
         piece_list = []
-        for y in range(0, len(self._pieces)):
-            for x in range(0, len(self._pieces[0])):
+        for y in range(0, self.ysize):
+            for x in range(0, self.xsize):
                 if (self.is_piece(x, y)):
                     piece_list.append([x, y, self.get_piece(x, y)])
         return piece_list
 
     def count_pieces(self, value):
         count = 0
-        for y in range(0, len(self._pieces)):
-            for x in range(0, len(self._pieces[0])):
+        for y in range(0, self.ysize):
+            for x in range(0, self.xsize):
                 if (self.get_piece(x, y) == value):
                     count += 1
         return count
@@ -96,44 +176,41 @@ class Board:
 
     def board_to_str(self, inc_labels=False, rotate=False):
         board_str = ""
-        ysize = len(self._pieces)
-        xsize = len(self._pieces[0])
-
         if not rotate:
-            cols = string.ascii_uppercase[:xsize]
-            rows = string.hexdigits[:ysize]
+            cols = string.hexdigits[:self.ysize]
+            rows = string.ascii_uppercase[:self.xsize]
         else:
-            cols = string.hexdigits[:ysize]
-            rows = string.ascii_uppercase[:xsize]
+            cols = string.ascii_uppercase[:self.xsize]
+            rows = string.hexdigits[:self.ysize]
         cols = list(cols)
         rows = list(rows)
         if inc_labels:
-            board_str += "    " + " ".join(cols) + "\n"
+            board_str += "    " + " ".join(cols) + "  \n"
             board_str += "  "
         if not rotate:
-            board_str += "+" + "-"*xsize*2 + "-+\n"
-            for i in range(ysize):
+            board_str += "+" + "-"*self.xsize*2 + "-+\n"
+            for i in range(self.ysize):
                 if inc_labels:
                     board_str += rows[i] + " "
                 board_str += "|"
-                for j in range(xsize):
+                for j in range(self.xsize):
                     board_str += " " + self._pieces[i][j]
                 board_str += " |\n"
             if inc_labels:
                 board_str += "  "
-            board_str += "+" + "-"*xsize*2 + "-+"
+            board_str += "+" + "-"*self.xsize*2 + "-+"
         else:
-            board_str += "+" + "-"*ysize*2 + "-+\n"
-            for i in range(xsize):
+            board_str += "+" + "-"*self.ysize*2 + "-+\n"
+            for i in range(self.xsize):
                 if inc_labels:
                     board_str += rows[i] + " "
                 board_str += "|"
-                for j in range(ysize):
+                for j in range(self.ysize):
                     board_str += " " + self._pieces[j][i]
                 board_str += " |\n"
             if inc_labels:
                 board_str += "  "
-            board_str += "+" + "-"*ysize*2 + "-+"
+            board_str += "+" + "-"*self.ysize*2 + "-+"
         return board_str
 
     def print_board(self, prefix=None, suffix=None, inc_labels=False, rotate=False, as_debug=False):
@@ -149,6 +226,29 @@ class Board:
                 cdkk.logger.debug(str)
             if suffix is not None:
                 cdkk.logger.debug(suffix)
+
+    def print_boards(board_list, prefix=None, suffix=None, inc_labels=False, rotate=False, spacer="        "):
+        if len(board_list) == 1:
+            board_list[0].print_board(prefix, suffix, inc_labels, rotate)
+        else:
+            print_str_list = None
+            for board in board_list:
+                board_str = board.board_to_str(inc_labels=inc_labels, rotate=rotate)
+                board_str_list = board_str.split("\n")
+                if print_str_list is None:
+                    print_str_list = board_str_list.copy()
+                else:
+                    for i in range(len(print_str_list)):
+                        print_str_list[i] = print_str_list[i] + spacer + board_str_list[i]
+
+        if prefix is not None: print(prefix)
+        print("\n".join(print_str_list))
+        if suffix is not None: print(suffix)
+
+    def a1_to_xy(a1_ref):
+        yrow = ord(a1_ref.upper()[0]) - ord('A')
+        xcol = int(a1_ref[1:])
+        return (xcol,yrow)
 
 # --------------------------------------------------
 
@@ -232,9 +332,6 @@ class GameManagerMP(GameManager):  # Multi-Player Game
         super().init_game()
         if self.num_players is not None:
             self.mpg_current_player = 1
-            self.mpg_player_codes = [str(x+1) for x in range(self.num_players)]
-            self.mpg_player_names = ["Player {0}".format(
-                x+1) for x in range(self.num_players)]
             self.game_set_context("WinnerNum", None)
 
     def start_game(self):
@@ -248,6 +345,9 @@ class GameManagerMP(GameManager):  # Multi-Player Game
     @num_players.setter
     def num_players(self, new_num_players):
         self._num_players = new_num_players
+        if new_num_players is not None:
+            self.mpg_player_codes = [str(x+1) for x in range(new_num_players)]
+            self.mpg_player_names = ["Player {0}".format(x+1) for x in range(new_num_players)]
 
     @property
     def current_player(self):
@@ -346,8 +446,10 @@ class BoardGame(GameManagerMP, Board):
     def calculate_play(self, col, row):
         return (col, row)
 
-    def execute_play(self, col, row):
-        self.set_piece(col, row, self.current_player_code)
+    def execute_play(self, col, row, code=None):
+        if code is None:
+            code = self.current_player_code
+        self.set_piece(col, row, code)
         consequences = None
         return consequences
 
@@ -533,9 +635,9 @@ class BoardGame_mnkGame(BoardGame):
     def calculate_play(self, col, row):
         # Piece drops to lowest available position
         found_play = False
-        for y in range(0, len(self._pieces)):
+        for y in range(0, self.ysize):
             if not found_play:
-                y2 = len(self._pieces) - y - 1
+                y2 = self.ysize - y - 1
                 if self.is_blank(col, y2):
                     found_play = True
         if found_play:
@@ -547,8 +649,8 @@ class BoardGame_mnkGame(BoardGame):
         # Return: Winner's number; 0 = Draw; None = No winner
         winner = None
         if self.game_in_progress:
-            for y in range(0, len(self._pieces)):
-                for x in range(0, len(self._pieces[0])):
+            for y in range(0, self.ysize):
+                for x in range(0, self.xsize):
                     for dir in Directions.all_dirs:
                         if winner is None:
                             winner = self.game_over_dir(x, y, dir)
@@ -608,18 +710,16 @@ class BoardGame_Mastermind(BoardGame):
     def board_to_str(self, inc_labels=False, rotate=False):
         # To Do: Rotate not supported
         board_str = ""
-        ysize = len(self._pieces)
-        xsize = len(self._pieces[0])
         if not rotate:
-            board_str = "+" + "-"*(xsize*2+1) + "-+\n"
-            for i in range(ysize):
+            board_str = "+" + "-"*(self.xsize*2+1) + "-+\n"
+            for i in range(self.ysize):
                 board_str += "|"
-                for j in range(xsize):
+                for j in range(self.xsize):
                     board_str += " " + self._pieces[i][j]
-                    if j == (xsize/2 - 1):
+                    if j == (self.xsize/2 - 1):
                         board_str += " "
                 board_str += " |\n"
-            board_str += "+" + "-"*(xsize*2+1) + "-+"
+            board_str += "+" + "-"*(self.xsize*2+1) + "-+"
         return board_str
 
     def valid_play(self, col, row, check_if_blank=False):

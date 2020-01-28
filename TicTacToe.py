@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, "cdkk")
 import cdkk
 from BoardGames import *
 
@@ -11,8 +13,8 @@ class BoardGame_TicTacToe(BoardGame):
         super().init_game()
         self.set_player_codes(["X", "O"])
 
-    def process_input(self, input):
-        self.play_piece(input, row=None)
+    def process_input(self, selection):
+        self.play_piece(selection, row=None)
         return True
 
     def check_game_over(self, player_num, col, row):
