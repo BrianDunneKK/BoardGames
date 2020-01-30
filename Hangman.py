@@ -1,9 +1,8 @@
 import cdkk
-from BoardGames import *
 from hangman_txt import *
+import random
 
-
-class BoardGame_Hangman(BoardGame):
+class BoardGame_Hangman(cdkk.BoardGame):
     def init_game(self):
         super().init_game()
         self.all_words = []

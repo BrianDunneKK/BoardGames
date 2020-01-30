@@ -1,11 +1,8 @@
-import sys
-sys.path.insert(0, "cdkk")
 import cdkk
-from BoardGames import *
 
 # --------------------------------------------------
 
-class BoardGame_TicTacToe(BoardGame):
+class BoardGame_TicTacToe(cdkk.BoardGame):
     def __init__(self):
         super().__init__(xsize=3, ysize=3, num_players=2)
 

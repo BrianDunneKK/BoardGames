@@ -1,10 +1,9 @@
-from BoardGames import *
 import cdkk
 
 # --------------------------------------------------
 
 
-class BoardGame_Battleship(BoardGame):
+class BoardGame_Battleship(cdkk.BoardGame):
     ships_cfg = {
         "Aircraft Carrier": 5,
         "Battleship": 4,
@@ -15,7 +14,7 @@ class BoardGame_Battleship(BoardGame):
 
     def __init__(self, grid_size=10):
         super().__init__(xsize=grid_size, ysize=grid_size, num_players=2)
-        self._guess_board = Board(grid_size, grid_size)
+        self._guess_board = cdkk.Board(grid_size, grid_size)
         self.ships = []
 
     def init_game(self):
@@ -32,7 +31,7 @@ class BoardGame_Battleship(BoardGame):
 
     def process_input(self, keys):
         if keys is not None:
-            xcol, yrow = Board.a1_to_xy(keys)
+            xcol, yrow = cdkk.Board.a1_to_xy(keys)
             self.play_piece(xcol, yrow, context=None)
         return (keys is not None)
 
