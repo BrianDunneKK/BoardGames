@@ -1,11 +1,10 @@
+# To Do: Convert from BoardGame to GameManagr
+
 import cdkk
 from hangman_txt import *
 import random
 
-class BoardGame_Hangman(cdkk.GameManagerMP):
-    def __init__(self):
-        super().__init__(num_players=2)
-
+class BoardGame_Hangman(cdkk.BoardGame):
     def init_game(self):
         super().init_game()
         self.all_words = []
@@ -23,20 +22,31 @@ class BoardGame_Hangman(cdkk.GameManagerMP):
         self.word_guess = "." * len(self.word)
         self.guesses = ""
 
-    def process_input(self, input_key):
-        if input_key not in self.guesses:
-            self.guesses += input_key
-            not_found = 1
-            for i in range(len(self.word)):
-                if input_key == self.word[i]:
-                    self.word_guess = self.word_guess[:i] + input_key + self.word_guess[i+1:]
-                    not_found = 0
-            self.mistakes += not_found
+    def process_input(self, input):
+        self.play_piece(context={"guess": input})
+        return True
 
+    def valid_play(self, *args):
+        return self.game_get_context("guess") not in self.guesses
+
+    def check_game_over(self, *args):
         if self.word == self.word_guess:
-            self.winner_num = 1
+            return 1
         elif self.mistakes == (len(hangman_txt)-1):
-            self.winner_num = 2
+            return 2
+        else:
+            return None
+
+    def execute_play(self, *args):
+        guess = self.game_get_context("guess")
+        self.guesses += guess
+        not_found = 1
+        for i in range(len(self.word)):
+            if guess == self.word[i]:
+                self.word_guess = self.word_guess[:i] + guess + self.word_guess[i+1:]
+                not_found = 0
+        self.mistakes += not_found
+        return True
 
     def draw_game(self):
         print("\n"+hangman_txt[self.mistakes])
@@ -49,7 +59,9 @@ class BoardGame_Hangman(cdkk.GameManagerMP):
             print("\nYou lost! The word was " + self.word + ".\n")
         super().end_game()
 
+
 # --------------------------------------------------
+
 
 class HangmanApp(cdkk.cdkkApp):
     def __init__(self):

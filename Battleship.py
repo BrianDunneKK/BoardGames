@@ -12,18 +12,16 @@ class BoardGame_Battleship(cdkk.BoardGame):
         "Destroyer": 2
     }
 
-    def __init__(self, grid_size=10):
-        super().__init__(xsize=grid_size, ysize=grid_size, num_players=2)
-        self._guess_board = cdkk.Board(grid_size, grid_size)
-        self.ships = []
-
     def init_game(self):
         super().init_game()
         self.set_player_names(["Player", "Computer"])
+        self._guess_board = cdkk.Board(self.xsize, self.ysize)
+        self.ships = []
 
     def start_game(self):
         super().start_game()
         self._guess_board.clear_board()
+        self.ships.clear()
         for name, size in BoardGame_Battleship.ships_cfg.items():
             ship = self.set_random(code=name[0], num=size)
             ship["sunk"] = False
@@ -36,12 +34,14 @@ class BoardGame_Battleship(cdkk.BoardGame):
         return (keys is not None)
 
     def valid_play(self, col=None, row=None, check_if_blank=True):
-        return self.valid_cell(col, row)
+        return self._guess_board.is_blank(col, row)
 
     def execute_play(self, col, row, code=None):
-        code = 'x' if self.is_blank(col, row) else '█'
-        if code == 'x':
+        if self.is_blank(col, row):
+            code = 'x'
             super().execute_play(col, row, code)
+        else:
+            code = '█'
         self._guess_board.set_piece(col, row, code)
         return None
 
@@ -68,8 +68,8 @@ class BoardGame_Battleship(cdkk.BoardGame):
         return winner
 
     def draw_game(self):
-        # Board.print_boards([self._guess_board, self], prefix="", inc_labels=True)
-        self._guess_board.print_board(prefix="", inc_labels=True)
+        cdkk.Board.print_boards([self._guess_board, self], prefix="", inc_labels=True)
+        # self._guess_board.print_board(prefix="", inc_labels=True)
 
     def end_game(self):
         print("\nWinner = " + self.winner_name + "\n")
@@ -85,7 +85,7 @@ class BoardGame_BattleshipApp(cdkk.cdkkApp):
             "read_key_and_process": {"match_pattern": "[a-jA-J][0-9]", "as_upper": True, "multi_key": True}
         }
         super().__init__(app_config)
-        self.add_game_mgr(BoardGame_Battleship())
+        self.add_game_mgr(BoardGame_Battleship(10))
 
 
 BoardGame_BattleshipApp().execute()
